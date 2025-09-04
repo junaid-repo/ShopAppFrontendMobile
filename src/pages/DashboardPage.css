@@ -1,0 +1,173 @@
+/* src/pages/DashboardPage.css */
+
+/* -------------------- STATS GRID -------------------- */
+
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 1rem 1.5rem;
+    border-radius: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* New: grid container for stat cards so we can control responsive layout */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card .icon {
+    font-size: 2.5rem;
+    padding: 1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.icon.revenue { background: #22c55e; }
+.icon.units { background: #413bf6; }
+.icon.tax { background: #bb2c56; }
+.icon.stock { background: #ff0024; }
+
+.stat-card p {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+}
+
+.stat-card h3 {
+    font-size: 1.95rem;
+    margin: 0.2rem 0 0;
+}
+
+/* -------------------- SHORTCUTS -------------------- */
+.shortcuts-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.shortcuts-container .btn {
+    width: calc(50% - 0.5rem); /* two per row with 1rem gap */
+    min-width: 120px;
+    transition: all 0.2s ease;
+}
+
+.shortcuts-container .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Stack buttons on very small screens -> keep two-per-row on mobile as requested */
+@media (max-width: 600px) {
+    .shortcuts-container .btn {
+        width: calc(50% - 0.5rem); /* keep two per row on mobile */
+    }
+}
+
+/* Ensure stat grid becomes two columns on narrower screens (mobile) */
+@media (max-width: 900px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    /* also ensure the stat-card elements use full width inside each grid cell */
+    .stat-card {
+        width: 100%;
+    }
+}
+
+
+
+/* -------------------- MODALS & FORMS -------------------- */
+.input-error {
+    border: 1px solid red;
+    background-color: #ffe6e6;
+}
+
+.error-message {
+    color: red;
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+/* -------------------- CUSTOMER CARD -------------------- */
+.customer-card {
+    position: relative;
+    padding: 1rem;
+    padding-bottom: 2.5rem; /* room for delete button */
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.customer-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.delete-btn {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    background: #d62828;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    padding: 0.4rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    transform: scale(1.1);
+    background: #ff0000;
+}
+
+/* -------------------- RECENT SALES TABLE -------------------- */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.data-table th, .data-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.data-table th {
+    background: rgba(255,255,255,0.1);
+}
+
+.status-paid {
+    color: #22c55e;
+    font-weight: 600;
+}
+
+.status-pending {
+    color: #ff9f1c;
+    font-weight: 600;
+}
+
+/* -------------------- RESPONSIVE -------------------- */

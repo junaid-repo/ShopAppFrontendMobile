@@ -1,0 +1,37 @@
+/* Alternating row colors */
+.data-table tbody tr:nth-child(odd) {
+  background-color: #ffffff; /* white */
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9; /* soft fade white */
+}
+
+/* Keep hover effect if desired */
+.data-table tbody tr:hover {
+  background-color: #eaf4ff; /* subtle blue tint on hover */
+}
+.report-type-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50; /* higher than table z-index */
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 6px;
+  margin-top: 0.25rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.btn-reversed {
+  background-color: black;  /* reversed background */
+  color: white;             /* reversed text */
+  border: 1px solid black;  /* match the background */
+}
+
+.btn {
+  background-color: white;
+  color: black;
+  border: 1px solid black;
+}

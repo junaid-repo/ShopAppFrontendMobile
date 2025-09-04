@@ -1,0 +1,82 @@
+/* Mobile Topbar Container */
+.topbar {
+    display: flex;
+    flex-direction: column; /* stack elements vertically */
+    gap: 10px;
+    padding: 0.5rem 0.75rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px var(--shadow-color);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Search bar */
+.topbar .search-bar {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+/* User area */
+.topbar-user {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem; /* smaller padding for mobile */
+    border-radius: 50px;
+
+
+
+    transition: all 0.3s ease;
+    gap: 8px; /* smaller gap */
+}
+
+.topbar-user:hover {
+    background-color: var(--primary-color-light);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 170, 255, 0.3);
+}
+
+/* Profile Picture */
+.profile-pic {
+    width: 40px; /* slightly smaller for mobile */
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary-color);
+    transition: transform 0.2s ease;
+}
+
+.topbar-user:hover .profile-pic {
+    transform: scale(1.05);
+}
+
+/* Username text */
+.user-name {
+    font-size: 12px; /* smaller font for mobile */
+    margin-left: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+    white-space: nowrap;
+}
+
+/* Logout / Theme buttons */
+.topbar button {
+    padding: 6px 10px; /* smaller padding */
+    font-size: 0.75rem; /* smaller font */
+    border-radius: 20px;
+    min-height: 36px; /* touch-friendly */
+    cursor: pointer;
+}
+
+/* Layout: wrap controls on small screens */
+.topbar > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+}

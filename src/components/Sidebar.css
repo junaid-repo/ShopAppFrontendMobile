@@ -1,0 +1,140 @@
+/* Sidebar Container */
+.sidebar {
+    width: 150px;          /* narrower for mobile */
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 2px 0 8px var(--shadow-color);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: fixed;       /* fixed on screen */
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    z-index: 1100; /* above main content but below hamburger (1100 used by hamburger too) */
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    transform: translateX(-100%); /* hidden by default (off-canvas) */
+    opacity: 0;
+    padding-top: 100px;
+}
+
+/* When visible (controlled via JS class) */
+.sidebar.visible {
+    transform: translateX(0);
+    opacity: 1;
+    z-index: 1200;
+}
+
+/* Hidden explicit state (same as default) */
+.sidebar.hidden {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+/* Collapsed sidebar keeps behavior but still off-canvas until visible */
+.sidebar.collapsed {
+    width: 60px;           /* icon-only view */
+}
+
+/* Overlay shown when sidebar is open */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 1050;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.sidebar-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Sidebar header */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 0.5rem 0.75rem;  /* smaller padding for mobile */
+}
+
+/* Logo text */
+.logo {
+    font-size: 1rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Sidebar nav */
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 0;
+    gap: 4px;
+}
+
+/* Nav links */
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;       /* smaller padding for mobile */
+    border-radius: 12px;
+    font-size: 0.85rem;      /* smaller font for mobile */
+    color: var(--text-color);
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+/* Active nav link */
+.nav-link.active {
+    background-color: var(--primary-color-light);
+    color: var(--primary-color);
+    transform: translateX(2px);
+}
+
+/* Nav text */
+.nav-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Icons */
+.nav-link svg {
+    font-size: 1.3rem;       /* slightly smaller icons for mobile */
+}
+
+/* Collapsed: hide text */
+.sidebar.collapsed .nav-text {
+    display: none;
+}
+
+/* Scrollbar adjustments for mobile */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}

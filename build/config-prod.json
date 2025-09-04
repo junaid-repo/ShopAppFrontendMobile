@@ -1,0 +1,4 @@
+{
+  "API_URL": "http://myshopapp2-env-1.eba-weax2nw7.eu-north-1.elasticbeanstalk.com",
+  "AUTH_API_URL": "http://webapps-users-env.eba-rtsh2yin.eu-north-1.elasticbeanstalk.com"
+}
