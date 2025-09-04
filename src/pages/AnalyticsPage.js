@@ -157,33 +157,72 @@ const AnalyticsPage = () => {
                     display: 'flex',
                     flexDirection: 'column', // stack vertically on mobile
                     alignItems: 'flex-start',
-                    gap: '10px',
+                    gap: '6px', // smaller gap between elements
                     padding: '8px',
-                    marginBottom: '15px'
+                    marginBottom: '15px',
+                    borderRadius: '12px',
+                    background: 'var(--glass-bg)', // works for light/dark themes
+                    color: 'var(--text-color)',     // text adapts to theme
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                 }}
             >
-                <label style={{ width: '100%' }}>
-                    Start Date:
-                    <input type="date" value={startDate}
-                           onChange={(e) => setStartDate(e.target.value)}
-                           style={{ width: '100%', marginTop: '4px', padding: '6px', fontSize: '0.85rem' }}
-                    />
-                </label>
-                <label style={{ width: '100%' }}>
-                    End Date:
-                    <input type="date" value={endDate}
-                           onChange={(e) => setEndDate(e.target.value)}
-                           style={{ width: '100%', marginTop: '4px', padding: '6px', fontSize: '0.85rem' }}
-                    />
-                </label>
+                <div className="stats-card dates-card" style={{ display: 'flex', gap: '6px', width: '100%' }}>
+                    <label style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+                        Start Date:
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            style={{
+                                width: '100%',
+                                marginTop: '2px',
+                                padding: '6px 8px',
+                                fontSize: '0.85rem',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--glass-bg)',
+                                color: 'var(--text-color)',
+                            }}
+                        />
+                    </label>
+
+                    <label style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+                        End Date:
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            style={{
+                                width: '100%',
+                                marginTop: '2px',
+                                padding: '6px 8px',
+                                fontSize: '0.85rem',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--glass-bg)',
+                                color: 'var(--text-color)',
+                            }}
+                        />
+                    </label>
+                </div>
+
                 <select
                     className="time-range-selector glass-card"
                     value={selectedMetric}
                     onChange={(e) => setSelectedMetric(e.target.value)}
-                    style={{ width: '100%', padding: '6px', fontSize: '0.85rem' }}
+                    style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        fontSize: '0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'var(--glass-bg)',
+                        color: 'var(--text-color)',
+                        appearance: 'none',
+                    }}
                 >
                     <option value="everything">Everything</option>
-                    {metrics.map(m => (
+                    {metrics.map((m) => (
                         <option key={m} value={m}>
                             {m === 'onlinePayments' ? 'Online Payment Count' : m.charAt(0).toUpperCase() + m.slice(1)}
                         </option>
@@ -194,7 +233,16 @@ const AnalyticsPage = () => {
                     className="time-range-selector glass-card"
                     value={chartType}
                     onChange={(e) => setChartType(e.target.value)}
-                    style={{ width: '100%', padding: '6px', fontSize: '0.85rem' }}
+                    style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        fontSize: '0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'var(--glass-bg)',
+                        color: 'var(--text-color)',
+                        appearance: 'none',
+                    }}
                 >
                     <option value="line">Line Chart</option>
                     <option value="bar">Bar Chart</option>
