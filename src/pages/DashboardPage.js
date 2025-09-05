@@ -130,8 +130,8 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="dashboard">
-            <h2>Dashboard</h2>
+        <div className="dashboard" style={{marginTop: "20px"}}>
+            <h3>Dashboard</h3>
 
             {/* Time Range Selector */}
             <div className="time-range-selector glass-card">
@@ -152,28 +152,28 @@ const DashboardPage = () => {
             {/* Stats */}
             <div className="stats-grid">
                 <div className="stat-card glass-card"  style={{ padding: "10px" }}>
-                    <FaChartLine className="icon revenue" />
+                    <FaChartLine className="icon revenue"  style={{ fontSize: "3.2rem" }}/>
                     <div>
                         <p>Total Revenue</p>
                         <h3 style={{ fontSize: "1.2rem" }}>₹{dashboardData.monthlyRevenue?.toLocaleString()}</h3>
                     </div>
                 </div>
                 <div className="stat-card glass-card" style={{ padding: "10px" }}>
-                    <FaBoxes className="icon units" />
+                    <FaBoxes className="icon units" style={{ fontSize: "3.2rem" }} />
                     <div>
                         <p>Total Units Sold</p>
                         <h3 style={{ fontSize: "1.2rem" }}>{dashboardData.totalUnitsSold}</h3>
                     </div>
                 </div>
                 <div className="stat-card glass-card" style={{ padding: "10px" }}>
-                    <FaRupeeSign className="icon tax" />
+                    <FaRupeeSign className="icon tax" style={{ fontSize: "3.2rem" }}/>
                     <div>
                         <p>Tax Collected</p>
                         <h3 style={{ fontSize: "1.2rem" }}>₹{dashboardData.taxCollected?.toLocaleString()}</h3>
                     </div>
                 </div>
                 <div className="stat-card glass-card" style={{ padding: "10px" }}>
-                    <FaBan className="icon stock" />
+                    <FaBan className="icon stock" style={{ fontSize: "3.2rem" }}/>
                     <div>
                         <p>Out of Stock Products</p>
                         <h3 style={{ fontSize: "1.2rem" }}>{dashboardData.outOfStockCount}</h3>
@@ -185,11 +185,12 @@ const DashboardPage = () => {
             <div className="quick-shortcuts glass-card" >
                 <h3 style ={{ marginTop: '30px', flexDirection: 'column', gap: '1rem' }}>Quick Shortcuts</h3>
                 <div className="shortcuts-container">
-                    <button className="btn" onClick={() => navigate("/billing")}>New Sale</button>
+                    <button className="btn" onClick={() => navigate("/billing")}>New Billing</button>
                     <button className="btn" onClick={() => setIsAddProdModalOpen(true)}>Add Product</button>
                     <button className="btn" onClick={() => setIsNewCusModalOpen(true)}>New Customer</button>
                     <button className="btn" onClick={() => navigate("/reports")}>Generate Report</button>
                     <button className="btn" onClick={() => navigate("/analytics")}>Analytics</button>
+                    <button className="btn" onClick={() => navigate("/payments")}>Payments</button>
                 </div>
             </div>
 

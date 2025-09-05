@@ -55,16 +55,20 @@
 }
 
 /* -------------------- SHORTCUTS -------------------- */
+/* -------------------- SHORTCUTS -------------------- */
 .shortcuts-container {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 1rem;
     margin-top: 1rem;
 }
 
 .shortcuts-container .btn {
-    width: calc(50% - 0.5rem); /* two per row with 1rem gap */
-    min-width: 120px;
+    flex: 1 1 calc(33.33% - 1rem); /* ✅ 3 per row */
+    max-width: 140px;               /* keeps from being too wide */
+    min-width: 100px;               /* keeps from shrinking too much */
+    text-align: center;
     transition: all 0.2s ease;
 }
 
@@ -72,6 +76,7 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
+
 
 /* Stack buttons on very small screens -> keep two-per-row on mobile as requested */
 @media (max-width: 600px) {

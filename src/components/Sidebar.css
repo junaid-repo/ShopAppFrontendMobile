@@ -58,6 +58,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
+
     gap: 8px;
     padding: 0.5rem 0.75rem;  /* smaller padding for mobile */
 }
@@ -72,6 +73,7 @@
 /* Sidebar toggle button */
 .sidebar-toggle-btn {
     background: transparent;
+
     border: none;
     cursor: pointer;
     padding: 4px;
@@ -82,10 +84,12 @@
 
 /* Sidebar nav */
 .sidebar-nav {
+    margin-top: 45px;
     display: flex;
     flex-direction: column;
     padding: 0.5rem 0;
-    gap: 4px;
+    gap: 20px;
+    font-size: 2.5rem;
 }
 
 /* Nav links */
@@ -95,7 +99,7 @@
     gap: 10px;
     padding: 8px 12px;       /* smaller padding for mobile */
     border-radius: 12px;
-    font-size: 0.85rem;      /* smaller font for mobile */
+    font-size: 1.15rem;      /* smaller font for mobile */
     color: var(--text-color);
     text-decoration: none;
     transition: background 0.2s ease, transform 0.2s ease;

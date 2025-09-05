@@ -6,84 +6,139 @@ var mockUser = {
   profilePic: 'https://placehold.co/150x150/00aaff/FFFFFF?text=JD',
   name: 'John Doe',
   email: 'john.doe@example.com',
-  phone: '+91 9876543210',
-  address: '123 Tech Park, Bangalore, India',
-  shopOwner: 'John Doe',
-  shopLocation: 'Main Street, Bangalore',
-  gstNumber: '29ABCDE1234F1Z5',
+  phone: '+91 00000000',
+  address: 'Home Address, City, Country',
+  shopOwner: 'Owner Name',
+  shopLocation: 'Shop Address, City, Country',
+  gstNumber: '15 digit GSTIN',
 };
 
 const getThemeStyles = () => {
-    const isDark = document.body.classList.contains("dark-theme");
+  const isDark = document.body.classList.contains('dark-theme');
+  const cssVar = (name, fallback) => `var(${name}, ${fallback})`;
 
-    return {
-        colors: {
-            primary: "#00aaff",
-            primaryLight: isDark ? "rgba(0,170,255,0.15)" : "#e0f7ff",
-            background: isDark ? "#0d1117" : "#f0f8ff",
-            glassBg: isDark ? "rgba(22,27,34,0.75)" : "rgba(240, 248, 255, 0.9)",
-            borderColor: isDark ? "rgba(139, 148, 158, 0.3)" : "rgba(224, 247, 255, 0.8)",
-            shadow: isDark ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.15)",
-            text: isDark ? "#c9d1d9" : "#333",
-            error: "#ff6b6b",
-            errorBg: "rgba(255, 107, 107, 0.15)",
-        },
+  return {
+    colors: {
+      primary: cssVar('--primary-color', '#00aaff'),
+      primaryLight: cssVar('--primary-color-light', isDark ? 'rgba(0,170,255,0.15)' : '#e0f7ff'),
+      background: cssVar('--background-color', isDark ? '#0d1117' : '#f0f8ff'),
+      glassBg: cssVar('--glass-bg', isDark ? 'rgba(22,27,34,0.75)' : 'rgba(240,248,255,0.9)'),
+      borderColor: cssVar('--border-color', isDark ? 'rgba(139,148,158,0.3)' : 'rgba(224,247,255,0.8)'),
+      shadow: cssVar('--shadow-color', isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.15)'),
+      text: cssVar('--text-color', isDark ? '#c9d1d9' : '#333'),
+      error: '#ff6b6b',
+      errorBg: 'rgba(255, 107, 107, 0.15)',
+    },
 
-        dashboard: {
-            padding: "2rem",
-            backgroundColor: isDark ? "#161b22" : "#ffffff",
-            color: isDark ? "#c9d1d9" : "#0a0087",
-            fontFamily: "'lemon_milk_pro_regular_webfont', sans-serif",
-        },
-        h2: {
-            textAlign: "center",
-            marginBottom: "2rem",
-            fontSize: "2.5rem",
-            color: isDark ? "#00aaff" : "#0a0087",
-        },
+    dashboard: {
+      padding: '2rem',
+      backgroundColor: cssVar('--body-bg', isDark ? '#161b22' : '#ffffff'),
+      color: cssVar('--text-color', isDark ? '#c9d1d9' : '#0a0087'),
+      fontFamily: "'lemon_milk_pro_regular_webfont', sans-serif",
+    },
 
-        glassCard: {
-            background: isDark ? "rgba(22,27,34,0.85)" : "rgba(240, 248, 255, 0.9)",
-            backdropFilter: "blur(10px)",
-            borderRadius: "30px",
-            border: `1px solid ${isDark ? "rgba(139, 148, 158, 0.3)" : "rgba(224, 247, 255, 0.8)"}`,
-            boxShadow: `0 4px 30px ${isDark ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.15)"}`,
-            padding: "2rem",
-        },
+    h2: {
+      textAlign: 'center',
+      marginBottom: '2rem',
+      fontSize: '2.5rem',
+      color: cssVar('--primary-color', isDark ? '#00aaff' : '#0a0087'),
+    },
 
-        label: {
-            fontWeight: "bold",
-            color: isDark ? "#c9d1d9" : "#0a0087",
-        },
+    glassCard: {
+      background: cssVar('--glass-bg', isDark ? 'rgba(22,27,34,0.65)' : 'rgba(240,248,255,0.9)'),
+      backdropFilter: 'blur(10px)',
+      borderRadius: '30px',
+      border: `1px solid ${cssVar('--border-color', isDark ? 'rgba(139,148,158,0.25)' : 'rgba(224,247,255,0.8)')}`,
+      boxShadow: `0 4px 30px ${cssVar('--shadow-color', isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.15)')}`,
+      padding: '2rem',
+    },
 
-        input: {
-            width: "100%",
-            padding: "0.75rem 1rem",
-            border: `1px solid ${isDark ? "#444c56" : "#ddd"}`,
-            borderRadius: "8px",
-            fontSize: "1rem",
-            backgroundColor: isDark ? "#0d1117" : "#fff",
-            color: isDark ? "#c9d1d9" : "#333",
-            transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-        },
+    label: {
+      fontWeight: 'bold',
+      color: cssVar('--text-color', isDark ? '#c9d1d9' : '#0a0087'),
+    },
 
-        modalContent: {
-            background: isDark ? "#161b22" : "white",
-            padding: "2rem",
-            borderRadius: "15px",
-            width: "90%",
-            maxWidth: "500px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-        },
+    input: {
+      width: '100%',
+      padding: '0.75rem 1rem',
+      border: `1px solid ${cssVar('--input-border', isDark ? '#444c56' : '#ddd')}`,
+      borderRadius: '8px',
+      fontSize: '1rem',
+      backgroundColor: cssVar('--input-bg', isDark ? '#0d1117' : '#fff'),
+      color: cssVar('--text-color', isDark ? '#c9d1d9' : '#333'),
+      caretColor: cssVar('--text-color', isDark ? '#c9d1d9' : '#333'),
+      WebkitTextFillColor: cssVar('--text-color', isDark ? '#c9d1d9' : '#333'),
+      transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
+    },
 
-        modalTitle: {
-            color: "#00aaff",
-            textAlign: "center",
-            margin: 0,
-        },
-    };
+    inputDisabled: {
+      backgroundColor: cssVar('--input-bg', isDark ? 'rgba(255,255,255,0.02)' : '#f5f5f5'),
+      color: cssVar('--text-color', isDark ? '#c9d1d9' : '#333'),
+      cursor: 'not-allowed',
+    },
+
+    inputError: {
+      borderColor: '#ff6b6b',
+      backgroundColor: 'rgba(255, 107, 107, 0.15)',
+    },
+
+    errorMessage: {
+      color: '#ff6b6b',
+      fontSize: '0.85rem',
+      marginTop: '-0.5rem',
+    },
+
+    modalOverlay: {
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000,
+    },
+
+    modalContent: {
+      background: cssVar('--modal-bg', isDark ? '#161b22' : 'white'),
+      padding: '2rem',
+      borderRadius: '15px',
+      width: '90%',
+      maxWidth: '500px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1rem',
+    },
+
+    modalTitle: {
+      color: cssVar('--primary-color', '#00aaff'),
+      textAlign: 'center',
+      margin: 0,
+    },
+
+    avatar: {
+      width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${cssVar('--primary-color', '#00aaff')}`,
+    },
+
+    avatarHover: {
+      transform: 'scale(1.05)',
+      boxShadow: `0 4px 20px ${cssVar('--primary-color', '#00aaff')}`,
+    },
+
+    btn: {
+      padding: '0.75rem 1.5rem', border: 'none', borderRadius: '25px', backgroundColor: cssVar('--primary-color', '#00aaff'), color: 'white', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s ease', fontWeight: 'bold',
+    },
+
+    btnHover: {
+      transform: 'translateY(-2px)', boxShadow: `0 4px 15px ${cssVar('--primary-color', '#00aaff')}`,
+    },
+
+    btnCancel: {
+      backgroundColor: 'rgba(255, 107, 107, 0.15)', border: '1px solid rgba(255, 107, 107, 0.4)', color: '#ff6b6b',
+    },
+
+    btnCancelHover: {
+      backgroundColor: 'rgba(255, 107, 107, 0.25)', boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)',
+    },
+
+    btnDisabled: { opacity: 0.5, cursor: 'not-allowed', transform: 'none', boxShadow: 'none' },
+
+    buttonRow: { display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem', marginTop: '2rem' },
+  };
 };
 
 // --- STYLES OBJECT (derived from your index.css) ---
@@ -117,7 +172,7 @@ const styles = {
 
   // Glassmorphism Card
   glassCard: {
-    background: 'rgba(240, 248, 255, 0.9)', // Using a slightly more opaque version for form readability
+    background: 'rgba(240, 248, 255, 0.9)',
     backdropFilter: 'blur(10px)',
     borderRadius: '30px',
     border: '1px solid rgba(224, 247, 255, 0.8)',
@@ -126,53 +181,12 @@ const styles = {
   },
 
   // Layout
-  twoColumn: {
-    display: 'flex',
-    gap: '2rem',
-    flexWrap: 'wrap',
-  },
-  column: {
-    flex: 1, // This ensures columns are distributed equally
-    minWidth: '300px', // For responsiveness
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-  },
+  twoColumn: { display: 'flex', gap: '2rem', flexWrap: 'wrap' },
+  column: { flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '1rem' },
 
   // Form Elements
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem',
-  },
-  label: {
-    fontWeight: 'bold',
-    color: '#0a0087',
-  },
-  input: {
-    width: '100%',
-    padding: '0.75rem 1rem',
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    backgroundColor: '#fff',
-    color: '#333',
-    transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
-  },
-  inputDisabled: {
-    backgroundColor: '#f5f5f5',
-    cursor: 'not-allowed',
-  },
-  inputError: {
-    borderColor: '#ff6b6b',
-    backgroundColor: 'rgba(255, 107, 107, 0.15)',
-  },
-  errorMessage: {
-    color: '#ff6b6b',
-    fontSize: '0.85rem',
-    marginTop: '-0.5rem',
-  },
-
+  formGroup: { display: 'flex', flexDirection: 'column', gap: '0.5rem' },
+  label: { fontWeight: 'bold', color: '#0a0087' },
   // Profile Picture Specific
   avatarContainer: {
     display: 'flex',
@@ -285,6 +299,7 @@ const UserProfilePage = () => {
 
 
     React.useEffect(() => {
+
         const observer = new MutationObserver(() => {
             setThemeStyles(getThemeStyles()); // Recompute when body class changes
         });
@@ -302,7 +317,7 @@ const UserProfilePage = () => {
   const [errors, setErrors] = useState({});
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordStep, setPasswordStep] = useState(1);
-    const storedToken = localStorage.getItem("jwt_token");
+    // ...stored token is retrieved locally inside functions when needed
     const config = useConfig();
         var apiUrl="";
           if(config){
@@ -322,11 +337,12 @@ const UserProfilePage = () => {
   // Ref for file input
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
+/*  useEffect(() => {
+
     setUser(mockUser);
     setFormData(mockUser);
     setProfilePicPreview(mockUser.profilePic);
-  }, []);
+  }, []);*/
 
 
   useEffect(() => {
@@ -356,6 +372,7 @@ const UserProfilePage = () => {
 
         setUser(details);
         setFormData(details);
+
 
         // ======= API CALL #2 (GET profile pic) =======
         // Choose one of these server behaviors:
@@ -402,7 +419,7 @@ const UserProfilePage = () => {
         }
       } catch (err) {
         console.error("Error loading profile:", err);
-        alert("Something went wrong while loading your profile.");
+        //alert("Something went wrong while loading your profile.");
       }
     };
 
@@ -427,11 +444,13 @@ const UserProfilePage = () => {
     const newErrors = {};
     if (!formData.name?.trim()) newErrors.name = 'Name is required';
     if (!formData.email?.includes('@')) newErrors.email = 'Invalid email';
-    if (!formData.phone?.match(/^\+91\s?\d{10}$/)) newErrors.phone = 'Invalid phone number';
-    if (!formData.address?.trim()) newErrors.address = 'Address is required';
-    if (!formData.shopOwner?.trim()) newErrors.shopOwner = 'Shop owner is required';
-    if (!formData.shopLocation?.trim()) newErrors.shopLocation = 'Shop location is required';
-    if (!formData.gstNumber?.trim()) newErrors.gstNumber = 'GST number is required';
+      if (!formData.phone?.match(/^[6-9]\d{9}$/)) {
+          newErrors.phone = 'Invalid phone number';
+      }
+  //  if (!formData.address?.trim()) newErrors.address = 'Address is required';
+   // if (!formData.shopOwner?.trim()) newErrors.shopOwner = 'Shop owner is required';
+    //if (!formData.shopLocation?.trim()) newErrors.shopLocation = 'Shop location is required';
+   // if (!formData.gstNumber?.trim()) newErrors.gstNumber = 'GST number is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -618,18 +637,20 @@ console.log("Decoded username:", passwordData.currentPassword);
   };
 
   const getInputStyle = (fieldHasError) => ({
-    ...styles.input,
-    ...(!isEditing && styles.inputDisabled),
-    ...(fieldHasError && styles.inputError),
+    ...mergedStyles.input,
+    ...(!isEditing && mergedStyles.inputDisabled),
+    ...(fieldHasError && mergedStyles.inputError),
   });
 
   // Custom hoverable button to avoid creating a separate component
   const HoverButton = ({ onClick, disabled, children, style, hoverStyle }) => {
       const [hover, setHover] = useState(false);
+      const baseStyle = style || mergedStyles.btn;
+      const baseHover = hoverStyle || mergedStyles.btnHover;
       const combinedStyle = {
-        ...style,
-        ...(hover && !disabled ? hoverStyle : {}),
-        ...(disabled ? styles.btnDisabled : {}),
+        ...baseStyle,
+        ...(hover && !disabled ? baseHover : {}),
+        ...(disabled ? mergedStyles.btnDisabled : {}),
       };
       return (
         <button
@@ -645,14 +666,14 @@ console.log("Decoded username:", passwordData.currentPassword);
   };
 
   return (
-    <div style={styles.dashboard}>
-      <h2 style={styles.h2}>User Profile</h2>
+    <div style={mergedStyles.dashboard}>
+      <h2 style={mergedStyles.h2}>User Profile</h2>
 
-      <div style={styles.glassCard}>
-        <div style={styles.twoColumn}>
+      <div style={mergedStyles.glassCard}>
+        <div style={mergedStyles.twoColumn}>
           {/* Left Column */}
-          <div style={styles.column}>
-            <div style={styles.avatarContainer}>
+          <div style={mergedStyles.column}>
+            <div style={mergedStyles.avatarContainer}>
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -661,7 +682,7 @@ console.log("Decoded username:", passwordData.currentPassword);
                     accept="image/*"
                     disabled={!isEditing}
                 />
-                <Hoverable hoverStyle={isEditing ? styles.avatarHover : {}}>
+                <Hoverable hoverStyle={isEditing ? mergedStyles.avatarHover : {}}>
                     <img
                         src={profilePicPreview || 'https://placehold.co/150x150/e0f7ff/00aaff?text=No+Img'}
                         alt="Profile"
@@ -669,11 +690,11 @@ console.log("Decoded username:", passwordData.currentPassword);
                         onClick={() => isEditing && fileInputRef.current.click()}
                     />
                 </Hoverable>
-                 {isEditing && <small>Click image to change</small>}
+                 {isEditing && <small style={{ color: mergedStyles.colors.text }}>Click image to change</small>}
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Name</label>
+            <div style={mergedStyles.formGroup}>
+              <label style={mergedStyles.label}>Name</label>
               <input
                 type="text"
                 value={formData.name || ''}
@@ -681,11 +702,11 @@ console.log("Decoded username:", passwordData.currentPassword);
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                 style={getInputStyle(errors.name)}
               />
-              {errors.name && <div style={styles.errorMessage}>{errors.name}</div>}
+              {errors.name && <div style={mergedStyles.errorMessage}>{errors.name}</div>}
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Email</label>
+            <div style={mergedStyles.formGroup}>
+              <label style={mergedStyles.label}>Email</label>
               <input
                 type="email"
                 value={formData.email || ''}
@@ -693,14 +714,14 @@ console.log("Decoded username:", passwordData.currentPassword);
                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                 style={getInputStyle(errors.email)}
               />
-              {errors.email && <div style={styles.errorMessage}>{errors.email}</div>}
+              {errors.email && <div style={mergedStyles.errorMessage}>{errors.email}</div>}
             </div>
           </div>
 
           {/* Right Column */}
-          <div style={styles.column}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Phone</label>
+          <div style={mergedStyles.column}>
+            <div style={mergedStyles.formGroup}>
+              <label style={mergedStyles.label}>Phone</label>
               <input
                 type="text"
                 value={formData.phone || ''}
@@ -708,11 +729,11 @@ console.log("Decoded username:", passwordData.currentPassword);
                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
                 style={getInputStyle(errors.phone)}
               />
-              {errors.phone && <div style={styles.errorMessage}>{errors.phone}</div>}
+              {errors.phone && <div style={mergedStyles.errorMessage}>{errors.phone}</div>}
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Address</label>
+            <div style={mergedStyles.formGroup}>
+              <label style={mergedStyles.label}>Address</label>
               <input
                 type="text"
                 value={formData.address || ''}
@@ -720,11 +741,11 @@ console.log("Decoded username:", passwordData.currentPassword);
                 onChange={e => setFormData({ ...formData, address: e.target.value })}
                 style={getInputStyle(errors.address)}
               />
-              {errors.address && <div style={styles.errorMessage}>{errors.address}</div>}
+              {errors.address && <div style={mergedStyles.errorMessage}>{errors.address}</div>}
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Shop Owner</label>
+            <div style={mergedStyles.formGroup}>
+              <label style={mergedStyles.label}>Shop Owner</label>
               <input
                 type="text"
                 value={formData.shopOwner || ''}
@@ -732,11 +753,11 @@ console.log("Decoded username:", passwordData.currentPassword);
                 onChange={e => setFormData({ ...formData, shopOwner: e.target.value })}
                 style={getInputStyle(errors.shopOwner)}
               />
-              {errors.shopOwner && <div style={styles.errorMessage}>{errors.shopOwner}</div>}
+              {errors.shopOwner && <div style={mergedStyles.errorMessage}>{errors.shopOwner}</div>}
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Shop Location</label>
+            <div style={mergedStyles.formGroup}>
+              <label style={mergedStyles.label}>Shop Location</label>
               <input
                 type="text"
                 value={formData.shopLocation || ''}
@@ -744,11 +765,11 @@ console.log("Decoded username:", passwordData.currentPassword);
                 onChange={e => setFormData({ ...formData, shopLocation: e.target.value })}
                 style={getInputStyle(errors.shopLocation)}
               />
-              {errors.shopLocation && <div style={styles.errorMessage}>{errors.shopLocation}</div>}
+              {errors.shopLocation && <div style={mergedStyles.errorMessage}>{errors.shopLocation}</div>}
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>GST Number</label>
+            <div style={mergedStyles.formGroup}>
+              <label style={mergedStyles.label}>GST Number</label>
               <input
                 type="text"
                 value={formData.gstNumber || ''}
@@ -756,16 +777,16 @@ console.log("Decoded username:", passwordData.currentPassword);
                 onChange={e => setFormData({ ...formData, gstNumber: e.target.value })}
                 style={getInputStyle(errors.gstNumber)}
               />
-              {errors.gstNumber && <div style={styles.errorMessage}>{errors.gstNumber}</div>}
+              {errors.gstNumber && <div style={mergedStyles.errorMessage}>{errors.gstNumber}</div>}
             </div>
           </div>
         </div>
 
-        <div style={styles.buttonRow}>
+        <div style={mergedStyles.buttonRow}>
           <HoverButton
             onClick={handleEditToggle}
-            style={styles.btn}
-            hoverStyle={styles.btnHover}
+            style={mergedStyles.btn}
+            hoverStyle={mergedStyles.btnHover}
           >
             {isEditing ? 'Submit' : 'Edit Profile'}
           </HoverButton>
@@ -773,8 +794,8 @@ console.log("Decoded username:", passwordData.currentPassword);
           {isEditing && (
             <HoverButton
               onClick={handleCancel}
-              style={{ ...styles.btn, ...styles.btnCancel }}
-              hoverStyle={styles.btnCancelHover}
+              style={{ ...mergedStyles.btn, ...mergedStyles.btnCancel }}
+              hoverStyle={mergedStyles.btnCancelHover}
             >
               Cancel
             </HoverButton>
@@ -783,8 +804,8 @@ console.log("Decoded username:", passwordData.currentPassword);
           <HoverButton
             onClick={() => setShowPasswordModal(true)}
             disabled={isEditing}
-            style={styles.btn}
-            hoverStyle={styles.btnHover}
+            style={mergedStyles.btn}
+            hoverStyle={mergedStyles.btnHover}
           >
             Update Password
           </HoverButton>
@@ -793,50 +814,50 @@ console.log("Decoded username:", passwordData.currentPassword);
 
       {/* Password Modal */}
       {showPasswordModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <h3 style={styles.modalTitle}>
+        <div style={mergedStyles.modalOverlay}>
+          <div style={mergedStyles.modalContent}>
+            <h3 style={mergedStyles.modalTitle}>
               {passwordStep === 1 ? 'Enter Current Password' : 'Set New Password'}
             </h3>
 
             {passwordStep === 1 ? (
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Current Password</label>
+              <div style={mergedStyles.formGroup}>
+                <label style={mergedStyles.label}>Current Password</label>
                 <input
                   type="password"
                   value={passwordData.currentPassword}
                   onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  style={styles.input}
+                  style={mergedStyles.input}
                 />
               </div>
             ) : (
               <>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>New Password</label>
+                <div style={mergedStyles.formGroup}>
+                  <label style={mergedStyles.label}>New Password</label>
                   <input
                     type="password"
                     value={passwordData.newPassword}
                     onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    style={styles.input}
+                    style={mergedStyles.input}
                   />
                 </div>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Confirm New Password</label>
+                <div style={mergedStyles.formGroup}>
+                  <label style={mergedStyles.label}>Confirm New Password</label>
                   <input
                     type="password"
                     value={passwordData.confirmPassword}
                     onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    style={styles.input}
+                    style={mergedStyles.input}
                   />
                 </div>
               </>
             )}
 
-            <div style={styles.buttonRow}>
+            <div style={mergedStyles.buttonRow}>
               <HoverButton
                 onClick={handlePasswordSubmit}
-                style={styles.btn}
-                hoverStyle={styles.btnHover}
+                style={mergedStyles.btn}
+                hoverStyle={mergedStyles.btnHover}
               >
                 {passwordStep === 1 ? 'Validate' : 'Submit'}
               </HoverButton>
@@ -846,8 +867,8 @@ console.log("Decoded username:", passwordData.currentPassword);
                   setPasswordStep(1);
                   setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 }}
-                style={{ ...styles.btn, ...styles.btnCancel }}
-                hoverStyle={styles.btnCancelHover}
+                style={{ ...mergedStyles.btn, ...mergedStyles.btnCancel }}
+                hoverStyle={mergedStyles.btnCancelHover}
               >
                 Cancel
               </HoverButton>

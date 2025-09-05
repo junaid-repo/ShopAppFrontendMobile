@@ -64,7 +64,7 @@ const MainLayout = ({ children, onLogout, toggleTheme, theme }) => {
                     top: 10,
                     left: 10,
                     zIndex: 1300,
-                    marginTop: '0.1rem',
+                    marginTop: '1rem',
                     fontSize: '1.5rem',
                     background: 'transparent', // transparent background
                     color: 'var(--text-color)', // optional: set text/icon color
@@ -80,6 +80,7 @@ const MainLayout = ({ children, onLogout, toggleTheme, theme }) => {
 
             {/* Sidebar (hidden by default, slides in when visible) */}
             <Sidebar
+                onLogout={handleLogout}
                 isCollapsed={isCollapsed}
                 onToggleCollapse={toggleCollapse}
                 visible={isSidebarVisible}

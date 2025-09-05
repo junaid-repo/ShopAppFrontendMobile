@@ -1,7 +1,7 @@
 // src/components/Topbar.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUserCircle, FaSignOutAlt, FaSun, FaMoon } from 'react-icons/fa';
+import { FaUserCircle, FaSignOutAlt, FaSun, FaMoon, FaHome } from 'react-icons/fa';
 import { jwtDecode } from "jwt-decode";
 import { useConfig } from "../pages/ConfigProvider";
 
@@ -66,22 +66,41 @@ const Topbar = ({ onLogout, theme, toggleTheme, toggleSidebar, isCollapsed }) =>
                 display: 'flex',
                // flexDirection: 'column', // stack vertically on mobile
                 gap: '5px',
-                marginTop: '1rem',
-                marginLeft: '150px',
+                marginTop: '1.5rem',
+                marginLeft: '50px',
                 padding: '0.5rem 0.75rem',
                 alignItems: 'stretch',
             }}
         >
+            {/* Left section → Home shortcut */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginRight: "12px", marginLeft: "55px" }}>
+                <div
+                    onClick={() =>  navigate("/")}
+                    style={{
+                        fontSize: "1.75rem",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        userSelect: "none",
+                        color: "var(--text-color)", // ✅ adapts to theme
+                        fontFamily:
+                            "lemon_milk_pro_regular_webfont, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
+                    }}
+                >
+                    ShopFlow
+                </div>
 
+            </div>
 
             {/* Controls */}
             <div style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                gap: "2px",
-                flexWrap: "wrap"
+                gap: "2px"
             }}>
+
+
+
                 {/* Theme Toggle */}
                 <button
                     onClick={toggleTheme}
@@ -157,22 +176,7 @@ const Topbar = ({ onLogout, theme, toggleTheme, toggleSidebar, isCollapsed }) =>
                 </div>
 
                 {/* Logout */}
-                <button
-                    onClick={handleLogout}
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        background: "#e80a0d",
-                        padding: "8px 12px",
-                        fontSize: "0.75rem",
-                        borderRadius: "20px",
-                        cursor: "pointer",
-                        boxShadow: "0 5px 5px rgba(255, 107, 107, 0.3)",
-                    }}
-                >
-                    <FaSignOutAlt style={{ fontSize: "0.8rem" }} />
-                </button>
+
             </div>
         </header>
     );

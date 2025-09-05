@@ -66,15 +66,17 @@ h2 {
 }
 
 .btn {
-    padding: 0.75rem 1.5rem;
+    padding: 0.9rem 0.7rem; /* ⬅️ reduced */
     border: none;
-    border-radius: 8px;
+    border-radius: 20px;
     cursor: pointer;
     background: #667eea;
     color: #fff;
     font-weight: 600;
+    font-size: 0.7rem;
     transition: all 0.2s ease;
 }
+
 
 .btn:hover {
     background: #5a67d8;

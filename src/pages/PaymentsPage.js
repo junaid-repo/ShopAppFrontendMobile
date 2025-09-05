@@ -210,7 +210,7 @@ const PaymentsPage = () => {
         <div className="stats-card total-card">
           <div className="card-title">Total Payments</div>
           <div className="total-amount"  style={{
-              fontSize: "40.1px"
+              fontSize: "30.1px"
           }}>₹{totalAmount.toLocaleString()}</div>
           <div className="total-sub">Showing: {fromDate} — {toDate}</div>
         </div>
@@ -250,7 +250,7 @@ const PaymentsPage = () => {
                 setCurrentPage(1); // reset to page 1 after search
             }}
             style={{
-                width: '30%',
+                width: '90%',
                 marginTop: '25px',
                 marginBottom: '-25px',
             }}

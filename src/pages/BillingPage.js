@@ -227,19 +227,17 @@ const BillingPage = () => {
                         ))}
                     </div>
                     <div className="invoice-summary">
-                        <h4 style={{ marginBottom: "12px" }}>
-                            Total without GST: <span>₹{total.toLocaleString()}</span>
-                        </h4>
-
-                        <p style={{ marginBottom: "12px" }}>
-                            GST: <span>₹{tax.toLocaleString()}</span>
+                        <h4>Total without gst: <span>₹{total.toLocaleString()}</span></h4>
+                        <p className="tax">
+                            GST : <span>₹{tax.toLocaleString()}</span>
                         </p>
-
-                        <p style={{ marginBottom: "12px" }}>
+                        {/* <p className="subtotal-actual">
+                            Subtotal (Actual): <span>₹{actualSubtotal.toLocaleString()}</span>
+                        </p>*/}
+                        <p className="discount">
                             Discount %: <span>{discountPercentage}%</span>
                         </p>
-
-                        <p style={{ marginBottom: "16px" }}>
+                        <p className="subtotal-selling">
                             Final Total: <span>₹{sellingSubtotal.toLocaleString()}</span>
                         </p>
 
@@ -263,30 +261,57 @@ const BillingPage = () => {
                             />
                         </div>
 
-                        <div className="payment-methods" style={{ marginBottom: "20px" }}>
-                            <h5 style={{ marginBottom: "12px" }}>Payment Method:</h5>
-                            {[
-                                { type: "CASH", color: "#00aaff", icon: "💵" },
-                                { type: "CARD", color: "#0077cc", icon: "💳" },
-                                { type: "UPI", color: "#3399ff", icon: "📱" },
-                            ].map((m) => (
-                                <label
-                                    key={m.type}
-                                    className={`payment-method ${paymentMethod === m.type ? "selected" : ""}`}
-                                    style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}
-                                >
-        <span className="method-icon" style={{ backgroundColor: m.color }}>
-          {m.icon}
+                        <div className="payment-methods" style={{ marginTop: '1rem' }}>
+                            <h5 style={{ marginBottom: '0.5rem', color: 'var(--primary-color)' }}>Payment Method:</h5>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {[
+                                    { type: 'CASH', color: '#00aaff', icon: '💵' },
+                                    { type: 'CARD', color: '#0077cc', icon: '💳' },
+                                    { type: 'UPI', color: '#3399ff', icon: '📱' }
+                                ].map(method => (
+                                    <label
+                                        key={method.type}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px',
+                                            width: '100%',
+                                            padding: '0.5rem 1rem',
+                                            borderRadius: '25px',
+                                            border: `1px solid ${paymentMethod === method.type ? 'var(--primary-color)' : 'var(--border-color)'}`,
+                                            background: paymentMethod === method.type ? 'var(--primary-color-light)' : 'var(--glass-bg)',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            fontWeight: '500',
+                                            color: 'var(--text-color)'
+                                        }}
+                                    >
+        <span
+            style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                backgroundColor: method.color,
+                color: 'white',
+                fontSize: '0.9rem'
+            }}
+        >
+          {method.icon}
         </span>
-                                    <input
-                                        type="radio"
-                                        value={m.type}
-                                        checked={paymentMethod === m.type}
-                                        onChange={(e) => setPaymentMethod(e.target.value)}
-                                    />
-                                    {m.type}
-                                </label>
-                            ))}
+                                        <input
+                                            type="radio"
+                                            value={method.type}
+                                            checked={paymentMethod === method.type}
+                                            onChange={e => setPaymentMethod(e.target.value)}
+                                            style={{ accentColor: 'var(--primary-color)' }}
+                                        />
+                                        {method.type}
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                     </div>
 

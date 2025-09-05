@@ -1,6 +1,7 @@
 // src/components/Sidebar.js
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 // ✅ Import Material Design Icons (from MUI)
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -13,6 +14,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import TableChartIcon from '@mui/icons-material/TableChart';
 
 import './Sidebar.css';
+import {FaSignOutAlt} from "react-icons/fa";
 
 // 🎨 Assign static colors for each icon
 const iconColors = {
@@ -27,7 +29,7 @@ const iconColors = {
 };
 
 // NOTE: changed props: isCollapsed, onToggleCollapse, visible, onClose
-const Sidebar = ({ isCollapsed = false, onToggleCollapse = () => {}, visible = false, onClose = () => {} }) => {
+const Sidebar = ({onLogout, theme, toggleTheme, isCollapsed = false, onToggleCollapse = () => {}, visible = false, onClose = () => {} }) => {
     const [isDark, setIsDark] = useState(() => typeof document !== 'undefined' && document.body.classList.contains('dark-theme'));
     const [primaryColor, setPrimaryColor] = useState(() => {
         try {
@@ -37,7 +39,7 @@ const Sidebar = ({ isCollapsed = false, onToggleCollapse = () => {}, visible = f
             return '#00aaff';
         }
     });
-
+    const navigate = useNavigate();
     useEffect(() => {
         // updater reads current body class and css var
         const update = () => {
@@ -51,6 +53,8 @@ const Sidebar = ({ isCollapsed = false, onToggleCollapse = () => {}, visible = f
         };
 
         update();
+
+
 
         // observe body class changes
         const obs = new MutationObserver(update);
@@ -69,6 +73,12 @@ const Sidebar = ({ isCollapsed = false, onToggleCollapse = () => {}, visible = f
             window.removeEventListener('storage', storageHandler);
         };
     }, []);
+    const handleLogout = () => {
+        const confirmLogout = window.confirm("Do you really want to log out?");
+        if (!confirmLogout) return;
+        onLogout();
+        navigate("/login", { replace: true });
+    };
 
     // color to use for icons when sidebar is collapsed: primary in light, white in dark
     const collapsedIconColor = isDark ? '#ffffff' : primaryColor || '#00aaff';
@@ -78,85 +88,117 @@ const Sidebar = ({ isCollapsed = false, onToggleCollapse = () => {}, visible = f
     return (
         <>
             {/* overlay shown when sidebar is visible */}
-            <div className={`sidebar-overlay ${visible ? 'visible' : ''}`} onClick={onClose} aria-hidden={visible ? 'false' : 'true'} />
+            <div className={`sidebar-overlay ${visible ? 'visible' : ''}`} onClick={onClose}
+                 aria-hidden={visible ? 'false' : 'true'}/>
 
-            <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${visible ? 'visible' : 'hidden'}`} aria-hidden={!visible}>
+            <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${visible ? 'visible' : 'hidden'}`}
+                   aria-hidden={!visible}>
 
                 <nav className="sidebar-nav">
 
-                    <NavLink to="/" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-                        {({ isActive }) => (
+                    <NavLink to="/" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+                        {({isActive}) => (
                             <>
-                                <DashboardIcon style={{ color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.dashboard) }} />
+                                <DashboardIcon
+                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.dashboard)}}/>
+
                                 <span className="nav-text">Dashboard</span>
                             </>
                         )}
                     </NavLink>
 
-                    <NavLink to="/products" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-                        {({ isActive }) => (
+                    <NavLink to="/products" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+                        {({isActive}) => (
                             <>
-                                <Inventory2Icon style={{ color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.products) }} />
+                                <Inventory2Icon
+                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.products)}}/>
                                 <span className="nav-text">Products</span>
                             </>
                         )}
                     </NavLink>
 
-                    <NavLink to="/sales" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-                        {({ isActive }) => (
+                    <NavLink to="/sales" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+                        {({isActive}) => (
                             <>
-                                <ShoppingCartIcon style={{ color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.sales) }} />
+                                <ShoppingCartIcon
+                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.sales)}}/>
                                 <span className="nav-text">Sales</span>
                             </>
                         )}
                     </NavLink>
 
-                    <NavLink to="/billing" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-                        {({ isActive }) => (
+                    <NavLink to="/billing" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+                        {({isActive}) => (
                             <>
-                                <ReceiptIcon style={{ color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.billing) }} />
+                                <ReceiptIcon
+                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.billing)}}/>
                                 <span className="nav-text">Billing</span>
                             </>
                         )}
                     </NavLink>
 
-                    <NavLink to="/customers" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-                        {({ isActive }) => (
+                    <NavLink to="/customers" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+                        {({isActive}) => (
                             <>
-                                <PeopleIcon style={{ color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.customers) }} />
+                                <PeopleIcon
+                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.customers)}}/>
                                 <span className="nav-text">Customers</span>
                             </>
                         )}
                     </NavLink>
 
-                    <NavLink to="/payments" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-                        {({ isActive }) => (
+                    <NavLink to="/payments" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+                        {({isActive}) => (
                             <>
-                                <CreditCardIcon style={{ color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.payments) }} />
+                                <CreditCardIcon
+                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.payments)}}/>
                                 <span className="nav-text">Payments</span>
                             </>
                         )}
                     </NavLink>
 
-                    <NavLink to="/reports" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-                        {({ isActive }) => (
+                    <NavLink to="/reports" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+                        {({isActive}) => (
                             <>
-                                <TableChartIcon style={{ color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.reports) }} />
+                                <TableChartIcon
+                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.reports)}}/>
                                 <span className="nav-text">Reports</span>
                             </>
                         )}
                     </NavLink>
 
-                    <NavLink to="/analytics" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-                        {({ isActive }) => (
+                    <NavLink to="/analytics" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+                        {({isActive}) => (
                             <>
-                                <BarChartIcon style={{ color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.analytics) }} />
+                                <BarChartIcon
+                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.analytics)}}/>
                                 <span className="nav-text">Analytics</span>
                             </>
                         )}
                     </NavLink>
 
                 </nav>
+                <div style={{padding: '1rem', textAlign: 'center'}}>
+                    <button
+                        onClick={handleLogout}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "4px",
+                            background: "#e80a0d",
+                            padding: "8px 12px",
+                            fontSize: "0.75rem",
+                            borderRadius: "20px",
+                            cursor: "pointer",
+                            boxShadow: "0 5px 5px rgba(255, 107, 107, 0.3)",
+                            color: '#fff'
+                        }}
+                    >
+                        <FaSignOutAlt style={{fontSize: "0.8rem"}}/>
+                        Logout
+                    </button>
+                </div>
             </aside>
         </>
     );
