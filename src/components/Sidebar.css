@@ -142,3 +142,31 @@
 .sidebar::-webkit-scrollbar-track {
     background: transparent;
 }
+
+.sidebar-link {
+    color: var(--text-color) !important;
+    font-size: 1rem;
+    font-family: inherit;
+    background: none;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.sidebar-link:hover {
+    background: var(--primary-color-light, #e0f7ff);
+    color: var(--primary-color);
+}
+
+.sidebar-link span {
+    color: var(--text-color) !important;
+}
+
+.sidebar-link svg {
+    color: inherit !important;
+}

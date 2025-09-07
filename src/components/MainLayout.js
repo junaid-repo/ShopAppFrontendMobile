@@ -3,9 +3,19 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import DashboardPage from '../pages/DashboardPage';
+import ProductsPage from '../pages/ProductsPage';
+import SalesPage from '../pages/SalesPage';
+import CustomersPage from '../pages/CustomersPage';
+import PaymentsPage from '../pages/PaymentsPage';
+import BillingPage from '../pages/BillingPage';
+import ReportsPage from '../pages/ReportsPage';
+import UserProfilePage from '../pages/UserProfilePage';
+import AnalyticsPage from '../pages/AnalyticsPage';
 
-const MainLayout = ({ children, onLogout, toggleTheme, theme }) => {
+const MainLayout = ({ onLogout, toggleTheme, theme }) => {
     const navigate = useNavigate();
+    const [currentPage, setCurrentPage] = useState('dashboard'); // Track current page
 
     // sidebar collapsed state (persist in localStorage)
     const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -66,8 +76,8 @@ const MainLayout = ({ children, onLogout, toggleTheme, theme }) => {
                     zIndex: 1300,
                     marginTop: '1rem',
                     fontSize: '1.5rem',
-                    background: 'transparent', // transparent background
-                    color: 'var(--text-color)', // optional: set text/icon color
+                    background: 'transparent',
+                    color: 'var(--text-color)',
                     border: 'none',
                     borderRadius: 8,
                     padding: '8px 10px',
@@ -77,7 +87,6 @@ const MainLayout = ({ children, onLogout, toggleTheme, theme }) => {
                 ☰
             </button>
 
-
             {/* Sidebar (hidden by default, slides in when visible) */}
             <Sidebar
                 onLogout={handleLogout}
@@ -85,6 +94,7 @@ const MainLayout = ({ children, onLogout, toggleTheme, theme }) => {
                 onToggleCollapse={toggleCollapse}
                 visible={isSidebarVisible}
                 onClose={() => setIsSidebarVisible(false)}
+                setCurrentPage={setCurrentPage} // Pass navigation function
             />
 
             {/* Main content */}
@@ -94,9 +104,19 @@ const MainLayout = ({ children, onLogout, toggleTheme, theme }) => {
                     toggleTheme={toggleTheme}
                     theme={theme}
                     isCollapsed={isCollapsed}
+                    setCurrentPage={setCurrentPage} // Pass navigation function
                 />
                 <main style={{ flex: 1, padding: '8px' }}>
-                    {children}
+                    {/* Render the selected page directly */}
+                    {currentPage === 'dashboard' && <DashboardPage />}
+                    {currentPage === 'products' && <ProductsPage />}
+                    {currentPage === 'sales' && <SalesPage />}
+                    {currentPage === 'customers' && <CustomersPage />}
+                    {currentPage === 'payments' && <PaymentsPage />}
+                    {currentPage === 'billing' && <BillingPage />}
+                    {currentPage === 'reports' && <ReportsPage />}
+                    {currentPage === 'profile' && <UserProfilePage />}
+                    {currentPage === 'analytics' && <AnalyticsPage />}
                 </main>
             </div>
         </div>

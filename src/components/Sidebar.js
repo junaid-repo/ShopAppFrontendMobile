@@ -1,6 +1,5 @@
 // src/components/Sidebar.js
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 // ✅ Import Material Design Icons (from MUI)
@@ -12,9 +11,10 @@ import PeopleIcon from '@mui/icons-material/People';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import TableChartIcon from '@mui/icons-material/TableChart';
+import { FaUserCircle } from "react-icons/fa";
 
 import './Sidebar.css';
-import {FaSignOutAlt} from "react-icons/fa";
+import { FaSignOutAlt } from "react-icons/fa";
 
 // 🎨 Assign static colors for each icon
 const iconColors = {
@@ -29,179 +29,120 @@ const iconColors = {
 };
 
 // NOTE: changed props: isCollapsed, onToggleCollapse, visible, onClose
-const Sidebar = ({onLogout, theme, toggleTheme, isCollapsed = false, onToggleCollapse = () => {}, visible = false, onClose = () => {} }) => {
-    const [isDark, setIsDark] = useState(() => typeof document !== 'undefined' && document.body.classList.contains('dark-theme'));
-    const [primaryColor, setPrimaryColor] = useState(() => {
-        try {
-            const val = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
-            return val ? val.trim() : '#00aaff';
-        } catch (e) {
-            return '#00aaff';
-        }
-    });
-    const navigate = useNavigate();
-    useEffect(() => {
-        // updater reads current body class and css var
-        const update = () => {
-            try {
-                setIsDark(document.body.classList.contains('dark-theme'));
-            } catch (e) {}
-            try {
-                const val = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
-                if (val) setPrimaryColor(val.trim());
-            } catch (e) {}
-        };
+const Sidebar = ({ onLogout, theme, toggleTheme, isCollapsed = false, onToggleCollapse = () => {}, visible = false, onClose = () => {}, setCurrentPage }) => {
+  const [isDark, setIsDark] = useState(() => typeof document !== 'undefined' && document.body.classList.contains('dark-theme'));
+  const [primaryColor, setPrimaryColor] = useState(() => {
+      try {
+          const val = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+          return val ? val.trim() : '#00aaff';
+      } catch (e) {
+          return '#00aaff';
+      }
+  });
+  const navigate = useNavigate();
+  useEffect(() => {
+      // updater reads current body class and css var
+      const update = () => {
+          try {
+              setIsDark(document.body.classList.contains('dark-theme'));
+          } catch (e) {}
+          try {
+              const val = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+              if (val) setPrimaryColor(val.trim());
+          } catch (e) {}
+      };
 
-        update();
+      update();
 
 
 
-        // observe body class changes
-        const obs = new MutationObserver(update);
-        try {
-            obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-        } catch (e) {}
+      // observe body class changes
+      const obs = new MutationObserver(update);
+      try {
+          obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      } catch (e) {}
 
-        // also listen to storage (theme saved in localStorage by App)
-        const storageHandler = (e) => {
-            if (e.key === 'theme' || e.key === 'sidebar_collapsed') update();
-        };
-        window.addEventListener('storage', storageHandler);
+      // also listen to storage (theme saved in localStorage by App)
+      const storageHandler = (e) => {
+          if (e.key === 'theme' || e.key === 'sidebar_collapsed') update();
+      };
+      window.addEventListener('storage', storageHandler);
 
-        return () => {
-            obs.disconnect();
-            window.removeEventListener('storage', storageHandler);
-        };
-    }, []);
-    const handleLogout = () => {
-        const confirmLogout = window.confirm("Do you really want to log out?");
-        if (!confirmLogout) return;
-        onLogout();
-        navigate("/login", { replace: true });
-    };
+      return () => {
+          obs.disconnect();
+          window.removeEventListener('storage', storageHandler);
+      };
+  }, []);
+  const handleLogout = () => {
+      const confirmLogout = window.confirm("Do you really want to log out?");
+      if (!confirmLogout) return;
+      onLogout();
+      navigate("/login", { replace: true });
+  };
 
-    // color to use for icons when sidebar is collapsed: primary in light, white in dark
-    const collapsedIconColor = isDark ? '#ffffff' : primaryColor || '#00aaff';
-    const toggleColor = collapsedIconColor;
+  // color to use for icons when sidebar is collapsed: primary in light, white in dark
+  const collapsedIconColor = isDark ? '#ffffff' : primaryColor || '#00aaff';
+  const toggleColor = collapsedIconColor;
 
-    // Do not render nothing; sidebar will be off-canvas unless `visible` is true. We still render the element for accessibility and animations.
-    return (
-        <>
-            {/* overlay shown when sidebar is visible */}
-            <div className={`sidebar-overlay ${visible ? 'visible' : ''}`} onClick={onClose}
-                 aria-hidden={visible ? 'false' : 'true'}/>
+  // Do not render nothing; sidebar will be off-canvas unless `visible` is true. We still render the element for accessibility and animations.
+  const menuItems = [
+    { key: 'dashboard', label: 'Dashboard', icon: <DashboardIcon style={{ color: iconColors.dashboard }} /> },
+    { key: 'products', label: 'Products', icon: <Inventory2Icon style={{ color: iconColors.products }} /> },
+    { key: 'sales', label: 'Sales', icon: <ShoppingCartIcon style={{ color: iconColors.sales }} /> },
+    { key: 'customers', label: 'Customers', icon: <PeopleIcon style={{ color: iconColors.customers }} /> },
+    { key: 'payments', label: 'Payments', icon: <CreditCardIcon style={{ color: iconColors.payments }} /> },
+    { key: 'billing', label: 'Billing', icon: <ReceiptIcon style={{ color: iconColors.billing }} /> },
+    { key: 'reports', label: 'Reports', icon: <TableChartIcon style={{ color: iconColors.reports }} /> },
+    { key: 'analytics', label: 'Analytics', icon: <BarChartIcon style={{ color: iconColors.analytics }} /> },
 
-            <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${visible ? 'visible' : 'hidden'}`}
-                   aria-hidden={!visible}>
+];
 
-                <nav className="sidebar-nav">
+  return (
+      <>
+          {/* overlay shown when sidebar is visible */}
+          <div className={`sidebar-overlay ${visible ? 'visible' : ''}`} onClick={onClose}
+               aria-hidden={visible ? 'false' : 'true'}/>
 
-                    <NavLink to="/" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
-                        {({isActive}) => (
-                            <>
-                                <DashboardIcon
-                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.dashboard)}}/>
+          <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${visible ? 'visible' : 'hidden'}`}
+                 aria-hidden={!visible}>
 
-                                <span className="nav-text">Dashboard</span>
-                            </>
-                        )}
-                    </NavLink>
-
-                    <NavLink to="/products" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
-                        {({isActive}) => (
-                            <>
-                                <Inventory2Icon
-                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.products)}}/>
-                                <span className="nav-text">Products</span>
-                            </>
-                        )}
-                    </NavLink>
-
-                    <NavLink to="/sales" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
-                        {({isActive}) => (
-                            <>
-                                <ShoppingCartIcon
-                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.sales)}}/>
-                                <span className="nav-text">Sales</span>
-                            </>
-                        )}
-                    </NavLink>
-
-                    <NavLink to="/billing" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
-                        {({isActive}) => (
-                            <>
-                                <ReceiptIcon
-                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.billing)}}/>
-                                <span className="nav-text">Billing</span>
-                            </>
-                        )}
-                    </NavLink>
-
-                    <NavLink to="/customers" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
-                        {({isActive}) => (
-                            <>
-                                <PeopleIcon
-                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.customers)}}/>
-                                <span className="nav-text">Customers</span>
-                            </>
-                        )}
-                    </NavLink>
-
-                    <NavLink to="/payments" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
-                        {({isActive}) => (
-                            <>
-                                <CreditCardIcon
-                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.payments)}}/>
-                                <span className="nav-text">Payments</span>
-                            </>
-                        )}
-                    </NavLink>
-
-                    <NavLink to="/reports" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
-                        {({isActive}) => (
-                            <>
-                                <TableChartIcon
-                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.reports)}}/>
-                                <span className="nav-text">Reports</span>
-                            </>
-                        )}
-                    </NavLink>
-
-                    <NavLink to="/analytics" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
-                        {({isActive}) => (
-                            <>
-                                <BarChartIcon
-                                    style={{color: isDark ? '#ffffff' : (isCollapsed ? (isActive ? '#ffffff' : collapsedIconColor) : iconColors.analytics)}}/>
-                                <span className="nav-text">Analytics</span>
-                            </>
-                        )}
-                    </NavLink>
-
-                </nav>
-                <div style={{padding: '1rem', textAlign: 'center'}}>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "4px",
-                            background: "#e80a0d",
-                            padding: "8px 12px",
-                            fontSize: "0.75rem",
-                            borderRadius: "20px",
-                            cursor: "pointer",
-                            boxShadow: "0 5px 5px rgba(255, 107, 107, 0.3)",
-                            color: '#fff'
-                        }}
-                    >
-                        <FaSignOutAlt style={{fontSize: "0.8rem"}}/>
-                        Logout
-                    </button>
-                </div>
-            </aside>
-        </>
-    );
+              <nav className="sidebar-nav">
+                  {menuItems.map(item => (
+                      <button
+                          key={item.key}
+                          className="sidebar-link"
+                          onClick={() => { setCurrentPage(item.key); if (visible) onClose(); }}
+                          style={{ display: 'flex', alignItems: 'center', width: '100%', background: 'none', border: 'none', padding: '10px', cursor: 'pointer' }}
+                      >
+                          {item.icon}
+                          <span style={{ marginLeft: 8 }}>{item.label}</span>
+                      </button>
+                  ))}
+              </nav>
+              <div style={{padding: '1rem', textAlign: 'center'}}>
+                  <button
+                      onClick={handleLogout}
+                      style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "4px",
+                          background: "#e80a0d",
+                          padding: "8px 12px",
+                          fontSize: "0.75rem",
+                          borderRadius: "20px",
+                          cursor: "pointer",
+                          boxShadow: "0 5px 5px rgba(255, 107, 107, 0.3)",
+                          color: '#fff'
+                      }}
+                  >
+                      <FaSignOutAlt style={{fontSize: "0.8rem"}}/>
+                      Logout
+                  </button>
+              </div>
+          </aside>
+      </>
+  );
 };
 
 export default Sidebar;

@@ -1,16 +1,14 @@
 // src/components/Topbar.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { FaUserCircle, FaSignOutAlt, FaSun, FaMoon, FaHome } from 'react-icons/fa';
 import { jwtDecode } from "jwt-decode";
 import { useConfig } from "../pages/ConfigProvider";
 
-const Topbar = ({ onLogout, theme, toggleTheme, toggleSidebar, isCollapsed }) => {
+const Topbar = ({ onLogout, theme, toggleTheme, toggleSidebar, isCollapsed, setCurrentPage }) => {
     const [userName, setUserName] = useState('');
     const [profilePic, setProfilePic] = useState(null);
-    const navigate = useNavigate();
-    const config = useConfig();
     let apiUrl = "";
+    const config = useConfig();
     if (config) {
         apiUrl = config.API_URL;
     }
@@ -49,14 +47,14 @@ const Topbar = ({ onLogout, theme, toggleTheme, toggleSidebar, isCollapsed }) =>
     }, [apiUrl]);
 
     const handleProfileClick = () => {
-        navigate('/profile');
+        setCurrentPage('profile');
     };
 
     const handleLogout = () => {
         const confirmLogout = window.confirm("Do you really want to log out?");
         if (!confirmLogout) return;
         onLogout();
-        navigate("/login", { replace: true });
+        setCurrentPage('login');
     };
 
     return (
@@ -75,7 +73,7 @@ const Topbar = ({ onLogout, theme, toggleTheme, toggleSidebar, isCollapsed }) =>
             {/* Left section → Home shortcut */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginRight: "12px", marginLeft: "55px" }}>
                 <div
-                    onClick={() =>  navigate("/")}
+                    onClick={() =>  setCurrentPage('home')}
                     style={{
                         fontSize: "1.75rem",
                         fontWeight: "700",
