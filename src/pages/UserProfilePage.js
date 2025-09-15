@@ -349,22 +349,27 @@ const UserProfilePage = () => {
     let objectUrlToRevoke = null;
 
     const loadProfile = async () => {
-      try {
-        const storedToken = localStorage.getItem("jwt_token");
-        if (!storedToken) {
-          alert("You are not logged in.");
-          return;
-        }
+      try {     var username="";
 
-        const { sub: username } = jwtDecode(storedToken);
+          const userRes = await fetch(`${apiUrl}/api/shop/user/profile`, {
+              method: "GET",
+              credentials: 'include',
+          });
+          if (userRes.ok) {
+              const userData = await userRes.json();
+              //alert(userData.username);
+              username=userData.username; // Assuming your backend sends the username
+          } else {
+              console.error('Failed to fetch user data:', userRes.statusText);
+          }
 
         // ======= API CALL #1 (GET JSON user details) =======
         // Example: GET /api/shop/user/{username}
         const detailsRes = await fetch(`${apiUrl}/api/shop/user/get/userprofile/${username}`, {
           method: "GET",
+            credentials: 'include',
           headers: {
-            Accept: "application/json",
-           Authorization: `Bearer ${storedToken}`,
+            Accept: "application/json"
           },
         });
         if (!detailsRes.ok) throw new Error(`User details fetch failed (${detailsRes.status})`);
@@ -382,9 +387,8 @@ const UserProfilePage = () => {
         // Example: GET /api/shop/user/{username}/profile-pic
         const picRes = await fetch(`${apiUrl}/api/shop/user/${username}/profile-pic`, {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${storedToken}`,
-          },
+            credentials: 'include',
+
         });
 
         if (picRes.ok) {
@@ -477,22 +481,26 @@ const UserProfilePage = () => {
          if (profilePicPreview) {
            formDataToSend.append("profilePic", profilePicPreview);
          }
-        const storedToken = localStorage.getItem("jwt_token");
-        if (!storedToken) {
-          alert("You are not logged in.");
-          return;
-        }
+         const userRes = await fetch(`${apiUrl}/api/shop/user/profile`, {
+             method: "GET",
+             credentials: 'include',
+         });
 
-        // 2. Decode token to extract username
-        const decoded = jwtDecode(storedToken);
-        const username = decoded.sub;
+         if (!userRes.ok) {
+             console.error('Failed to fetch user data:', userRes.statusText);
+             return;
+         }
+
+         const userData = await userRes.json();
+         const username = userData.username;
         console.log("Decoded username:", username);
         // ---- API CALL 1: Update user details (JSON only) ----
         const detailsResponse = await fetch(`${apiUrl}/api/shop/user/edit/${username}`, {
           method: "PUT",
+            credentials: 'include',
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${storedToken}`,
+            "Content-Type": "application/json"
+
           },
           body: JSON.stringify(formData),
         });
@@ -510,7 +518,8 @@ const UserProfilePage = () => {
 
                   const picResponse = await fetch(`${apiUrl}/api/shop/user/edit/profilePic/${username}`, {
                     method: "PUT",
-                    headers: { Authorization: `Bearer ${storedToken}` },
+                      credentials: 'include',
+
                     body: picForm,
                   });
 
@@ -553,22 +562,23 @@ const UserProfilePage = () => {
   const handlePasswordSubmit = async () => {
     if (passwordStep === 1) {
       try {
-        // 1. Get token from localStorage
-        const storedToken = localStorage.getItem("jwt_token");
-        if (!storedToken) {
-          alert("You are not logged in.");
-          return;
-        }
+          const userRes = await fetch(`${apiUrl}/api/shop/user/profile`, {
+              method: "GET",
+              credentials: 'include',
+          });
 
-        // 2. Decode token to extract username
-        const decoded = jwtDecode(storedToken);
-        const username = decoded.sub; // or decoded.username depending on your token
-        console.log("Decoded username:", username);
-console.log("Decoded username:", passwordData.currentPassword);
+          if (!userRes.ok) {
+              console.error('Failed to fetch user data:', userRes.statusText);
+              return;
+          }
+
+          const userData = await userRes.json();
+          const username = userData.username;
         // 3. Call generateToken API with username + entered currentPassword
         const response = await fetch(authApiUrl+"/auth/authenticate", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${storedToken}` },
+            credentials: 'include',
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: username,
             password: passwordData.currentPassword,

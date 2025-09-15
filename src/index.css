@@ -1082,3 +1082,142 @@ html {
     padding: 0.35rem;
     margin: 0;
 }
+
+/* Responsive: stack the three cards on small screens and stack date inputs vertically */
+@media (max-width: 900px) {
+    .payments-stats {
+        flex-direction: column;
+    }
+    .time-range-selector-vertical {
+        flex-direction: column; /* stack date inputs on small screens */
+        gap: 8px;
+    }
+    .billing-layout {
+        grid-template-columns: 1fr;
+    }
+}
+.actions-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.actions-group-left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.columns-dropdown-container {
+    position: relative;
+}
+
+.columns-dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    background: #fff;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    padding: 10px;
+    z-index: 1000;
+    min-width: 220px;
+}
+
+.columns-list {
+    max-height: 250px;
+    overflow-y: auto;
+    margin-bottom: 8px;
+}
+
+.column-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 14px;
+}
+.column-item:hover {
+    background-color: #f5f5f5;
+}
+.column-item input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
+}
+
+.columns-dropdown-footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.pagination-info {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.pagination-controls button {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+    background-color: #f5f5f5;
+}
+
+.pagination-controls button:disabled {
+    cursor: not-allowed;
+    color: #aaa;
+}
+
+.pagination-controls button.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.action-icons {
+    display: flex;
+    gap: 8px;
+}
+
+.action-icon {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+.action-icon.edit { background-color: #e0f7fa; color: #00796b; }
+.action-icon.edit:hover { background-color: #b2ebf2; }
+.action-icon.delete { background-color: #ffebee; color: #d32f2f; }
+.action-icon.delete:hover { background-color: #ffcdd2; }

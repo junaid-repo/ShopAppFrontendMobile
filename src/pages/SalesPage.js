@@ -18,10 +18,10 @@ const SalesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize] = useState(10);
-
+    const [totalPages, setTotalPages] = useState(10);
     const [selectedOrder, setSelectedOrder] = useState(null); // 🟢 For modal details
     const [showModal, setShowModal] = useState(false);
-    const token = localStorage.getItem("jwt_token");
+
     const config = useConfig();
     var apiUrl = "";
     if (config) {
@@ -42,7 +42,7 @@ const SalesPage = () => {
         gap: '0.75rem',
         fontSize: '1.3rem',
         fontWeight: '600',
-        color: '#213C67FF',
+        color: 'var(--text-color)',
         marginBottom: '1rem',
         borderBottom: '1px solid var(--border-color)',
         paddingBottom: '0.75rem',
@@ -54,7 +54,7 @@ const SalesPage = () => {
         gap: '0.75rem',
         fontSize: '1.1rem',
         lineHeight: '1.8rem',
-        color: '#213C67FF',
+        color: 'var(--text-color-secondary)',
     };
 
     const summaryRowStyle = {
@@ -67,44 +67,44 @@ const SalesPage = () => {
 
 
     useEffect(() => {
-        fetch(apiUrl + "/api/shop/get/sales", {
-            method: "GET",
-            headers: {
+        const fetchSales = async () => {
+            try {
+                const response = await axios.get(`${apiUrl}/api/shop/get/sales`, {
+                    params: {
+                        page: currentPage - 1,
+                        size: pageSize,
+                        search: searchTerm || '' // ✅ sent to backend
+                    },
+                    withCredentials: true,
+                });
 
-                'Authorization': `Bearer ${token}`
-            }
-        })
-            .then((response) => {
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                return response.json();
-            })
-            .then((data) => {
-                setSales(data);
-            })
-            .catch((error) => {
+                setSales(response.data.content);
+                setTotalPages(response.data.totalPages); // ✅ Fix typo here too (was `totalePages`)
+            } catch (error) {
                 console.error("Error fetching sales:", error);
                 alert("Something went wrong while fetching sales.");
-            });
-    }, []);
+            }
+        };
 
-    const filteredSales = sales.filter(s =>
-        s.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+        fetchSales();
+    }, [apiUrl, currentPage, pageSize, searchTerm]); // ✅ Add searchTerm here
+
+
+
 
     const indexOfLast = currentPage * pageSize;
     const indexOfFirst = indexOfLast - pageSize;
-    const currentSales = filteredSales.slice(indexOfFirst, indexOfLast);
-    const totalPages = Math.ceil(filteredSales.length / pageSize);
+    // const currentSales = filteredSales.slice(indexOfFirst, indexOfLast);
+    const currentSales = sales;
+
 
     const handleDownloadInvoice = async (saleId) => {try {
         const response = await axios.get(
             `${apiUrl}/api/shop/get/invoice/${saleId}`,
             {
                 responseType: "blob",
-                headers: {
-                    Authorization: `Bearer ${token}` // <-- Add your token here
-                }
+                withCredentials: true,
+
             }
         );
 
@@ -131,9 +131,8 @@ const SalesPage = () => {
             const response = await axios.get(
                 `${apiUrl}/api/shop/get/order/${saleId}`,
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}` // Replace with your token variable
-                    }
+                    withCredentials: true,
+
                 }
             );
 
@@ -163,42 +162,50 @@ const SalesPage = () => {
             </div>
 
             <div className="glass-card">
-                <table className="data-table" style={{ borderCollapse: "collapse", width: "100%" }}>
+                <table
+                    className="data-table"
+                    style={{ borderCollapse: "collapse", width: "100%" }}
+                >
                     <thead>
                     <tr>
-                        <th style={{ padding: "8px 6px" }}>Invoice ID</th>
-                        <th style={{ padding: "8px 6px" }}>Customer</th>
-                        <th style={{ padding: "8px 6px" }}>Date</th>
-                        <th style={{ padding: "8px 6px" }}>Total</th>
-                        <th style={{ padding: "8px 6px" }}>Status</th>
-                        <th style={{ padding: "8px 6px" }}>Invoice</th>
+                        <th style={{ padding: "6px 8px" }}>Invoice ID</th>
+                        <th style={{ padding: "6px 8px" }}>Customer</th>
+                        <th style={{ padding: "6px 8px" }}>Date</th>
+                        <th style={{ padding: "6px 8px" }}>Total</th>
+                        <th style={{ padding: "6px 8px" }}>Status</th>
+                        <th style={{ padding: "6px 8px" }}>Invoice</th>
                     </tr>
                     </thead>
                     <tbody>
                     {currentSales.map((sale) => (
                         <tr
                             key={sale.id}
-                            onClick={() => handleRowClick(sale.id)}
+                            onClick={() => handleRowClick(sale.id)} // 🟢 click row to open modal
                             style={{ cursor: "pointer" }}
                         >
-                            <td style={{ padding: "8px 6px" }}>{sale.id}</td>
-                            <td style={{ padding: "8px 6px" }}>{sale.customer}</td>
-                            <td style={{ whiteSpace: "nowrap", padding: "8px 6px" }}>
+                            <td style={{ padding: "6px 8px" }}>{sale.id}</td>
+                            <td style={{ padding: "6px 8px" }}>{sale.customer}</td>
+                            <td style={{ padding: "6px 8px" }}>
                                 {(() => {
                                     const d = new Date(sale.date);
                                     const day = String(d.getDate()).padStart(2, "0");
-                                    const month = String(d.getMonth() + 1).padStart(2, "0");
+                                    const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are 0-based
                                     const year = d.getFullYear();
                                     return `${day}-${month}-${year}`;
                                 })()}
                             </td>
-                            <td style={{ padding: "8px 6px" }}>₹{sale.total.toLocaleString()}</td>
-                            <td style={{ padding: "8px 6px" }}>
-          <span className={sale.status === "Paid" ? "status-paid" : "status-pending"}>
-            {sale.status}
-          </span>
+                            <td style={{ padding: "6px 8px" }}>₹{sale.total.toLocaleString()}</td>
+                            <td style={{ padding: "6px 8px" }}>
+            <span
+                className={
+                    sale.status === "Paid" ? "status-paid" : "status-pending"
+                }
+            >
+              {sale.status}
+            </span>
                             </td>
-                            <td style={{ padding: "8px 6px" }}>
+
+                            <td style={{ padding: "6px 8px" }}>
                                 <button
                                     className="download-btn"
                                     title="Download Invoice"
@@ -210,21 +217,22 @@ const SalesPage = () => {
                                         cursor: "pointer",
                                         backgroundColor: "#6CDB11",
                                         borderRadius: "6px",
-                                        padding: "4px",
-                                        marginRight: "4px",
+                                        padding: "4px 6px",
+                                        marginRight: "6px",
                                         display: "inline-flex",
                                         alignItems: "center",
-                                        justifyContent: "center"
+                                        color: "blue",
+                                        justifyContent: "center",
                                     }}
                                 >
-                                    <MdDownload size={16} color="#d32f2f" />
+                                    <MdDownload size={18} color="#d32f2f" />
                                 </button>
                             </td>
                         </tr>
                     ))}
                     {currentSales.length === 0 && (
                         <tr>
-                            <td colSpan="6" style={{ textAlign: "center", padding: "8px 6px" }}>
+                            <td colSpan="6" style={{ textAlign: "center", padding: "8px" }}>
                                 No sales found.
                             </td>
                         </tr>
@@ -232,28 +240,34 @@ const SalesPage = () => {
                     </tbody>
                 </table>
 
-
                 {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="pagination">
-                        <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
                             Prev
                         </button>
                         {[...Array(totalPages)].map((_, idx) => (
                             <button
                                 key={idx}
-                                className={currentPage === idx + 1 ? 'active' : ''}
+                                className={currentPage === idx + 1 ? "active" : ""}
                                 onClick={() => setCurrentPage(idx + 1)}
                             >
                                 {idx + 1}
                             </button>
                         ))}
-                        <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
                             Next
                         </button>
                     </div>
                 )}
             </div>
+
 
             {/* 🟢 Order Details Modal */}
             {showModal && selectedOrder && (<div
@@ -282,7 +296,7 @@ const SalesPage = () => {
                         boxShadow: "0 8px 30px var(--shadow-color)",
                         maxHeight: "90vh",
                         overflowY: "auto",
-                        color: "#213C67FF",
+                        color: "var(--text-color)",
                         border: "1px solid var(--border-color)",
                         animation: "slideIn 0.3s ease"
                     }}

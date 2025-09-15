@@ -1,5 +1,5 @@
 // src/pages/LoginPage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
 import { useConfig } from "./ConfigProvider";
@@ -31,7 +31,148 @@ const LoginPage = ({ onLogin }) => {
     const config = useConfig();
     const apiUrl = config?.API_URL || "";
     const authApiUrl = config?.AUTH_API_URL || "";
+    const [resendTimer, setResendTimer] = useState(60);
+    const [retryCount, setRetryCount] = useState(null);
 
+// --- NEW STATES FOR REGISTER FLOW ---
+    const [registerData, setRegisterData] = useState({
+        fullName: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: ""
+    });
+    const [registerMessage, setRegisterMessage] = useState("");
+    const [registeringUser, setRegisteringUser] = useState(null); // stores email/username after register
+
+// --- HELPERS TO OPEN/CLOSE ---
+    const openRegisterModal = () => {
+        setRegisterData({ fullName: "", email: "", phone: "", password: "", confirmPassword: "" });
+        setRegisterMessage("");
+        setModal("register");
+    };
+    const closeRegisterModal = () => {
+        setModal(null);
+        setRegisterMessage("");
+    };
+
+    // ⏱ Start timer + fetch retry count when registerOtp modal opens
+    useEffect(() => {
+        let interval;
+        if (modal === "registerOtp") {
+            setResendTimer(120); // reset to 60 seconds
+            interval = setInterval(() => {
+                setResendTimer((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+
+            // Fetch retry count from API
+            const fetchRetry = async () => {
+                try {
+                    const res = await fetch(authApiUrl + `/auth/otp-retry-count?username=${registeringUser}`);
+                    const data = await res.json();
+                    setRetryCount(data.retryLeft ?? null);
+                } catch (err) {
+                    console.error("Retry count fetch error:", err);
+                    setRetryCount(null);
+                }
+            };
+            fetchRetry();
+        }
+        return () => clearInterval(interval);
+    }, [modal, registeringUser, authApiUrl]);
+
+// 🔄 Resend OTP handler
+    const handleResendOtp = async () => {
+        try {
+            const res = await fetch(authApiUrl + "/auth/resend-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: registeringUser })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setResendTimer(60); // restart timer
+            } else {
+                setResultMessage("❌ " + (data.message || "Failed to resend OTP"));
+                openResultModal("❌ " + (data.message || "Failed to resend OTP"));
+            }
+        } catch (err) {
+            openResultModal("❌ Error: " + err.message);
+        }
+    };
+
+// --- HANDLE REGISTER API CALL ---
+    const handleRegister = async () => {
+        const { fullName, email, phone, password, confirmPassword } = registerData;
+        if (!fullName || !email || !phone || !password || !confirmPassword) {
+            setRegisterMessage("❌ All fields are required");
+            return;
+        }
+        if (password !== confirmPassword) {
+            setRegisterMessage("❌ Passwords do not match");
+            return;
+        }
+        //  alert(registerData)
+
+        try {
+            const res = await fetch(authApiUrl + "/auth/register/newuser", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(registerData)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                setRegisterMessage("✅ Registration successful, please verify OTP");
+                setRegisteringUser(data.username || email); // store username/email for OTP
+                setModal(null);
+                setOtp("");
+                setModal("registerOtp"); // open OTP modal for register
+            } else {
+                setRegisterMessage("❌ " + (data.message || "Registration failed"));
+            }
+        } catch (err) {
+            setRegisterMessage("❌ Error: " + err.message);
+        }
+    };
+
+// --- HANDLE REGISTER OTP VERIFY ---
+    const handleRegisterOtp = async () => {
+        if (!otp || otp.length !== 6) {
+            setResultMessage("❌ Enter valid 6-digit OTP");
+            setIsSuccess(false);
+            openResultModal("❌ Enter valid 6-digit OTP");
+            return;
+        }
+
+        const payload = { username: registeringUser, otp };
+        try {
+            const res = await fetch(authApiUrl + "/auth/verify-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                setIsSuccess(true);
+                openResultModal("✅ " + (data.message || "Registration complete! Your username is "||data.username ||" Please login with this username and password to use the system."));
+            } else {
+                setIsSuccess(false);
+                openResultModal("❌ " + (data.message || "Invalid OTP"));
+                // keep OTP modal open if failed
+                setModal("registerOtp");
+            }
+        } catch (err) {
+            openResultModal("❌ Error: " + err.message);
+        }
+    };
 
     // ---------- LOGIN ----------
     const handleSubmit = async (e) => {
@@ -41,17 +182,16 @@ const LoginPage = ({ onLogin }) => {
         try {
             const response = await fetch(authApiUrl + "/auth/authenticate", {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
             if (!response.ok) throw new Error('Login failed');
             const token = await response.text();
             if (token) {
-                localStorage.setItem('jwt_token', token);
+                // localStorage.setItem('jwt_token', token);
                 onLogin(true);
                 navigate('/');
-            } else {
-                setError("Invalid username or password");
             }
         } catch (err) {
             setError(err.message || 'An error occurred during login');
@@ -203,7 +343,7 @@ const LoginPage = ({ onLogin }) => {
     return (
         <div className="login-container">
             <div className="login-box glass-card">
-                <h1 className="login-logo">ShopFlow</h1>
+                <h1 className="login-logo">Clear Bill</h1>
                 <h2>Admin Login</h2>
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">
@@ -232,6 +372,11 @@ const LoginPage = ({ onLogin }) => {
                 <div style={{ marginTop: "1rem" }}>
                     <button className="btn same-size-btn" onClick={openForgotModal}>
                         Forgot Password?
+                    </button>
+                </div>
+                <div style={{ marginTop: "0.5rem" }}>
+                    <button className="btn same-size-btn" onClick={openRegisterModal}>
+                        Register
                     </button>
                 </div>
             </div>
@@ -270,6 +415,87 @@ const LoginPage = ({ onLogin }) => {
                     </div>
                 </div>
             )}
+
+            {modal === "register" && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2>Register</h2>
+                            <button className="close-btn" onClick={closeRegisterModal}>×</button>
+                        </div>
+                        <div className="form-group"><input type="text" placeholder="Full Name"
+                                                           value={registerData.fullName}
+                                                           onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
+                        /></div>
+                        <div className="form-group"><input type="email" placeholder="Email"
+                                                           value={registerData.email}
+                                                           onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                        /></div>
+                        <div className="form-group"><input type="text" placeholder="Phone"
+                                                           value={registerData.phone}
+                                                           onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                        /></div>
+                        <div className="form-group"><input type="password" placeholder="Password"
+                                                           value={registerData.password}
+                                                           onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                        /></div>
+                        <div className="form-group"><input type="password" placeholder="Confirm Password"
+                                                           value={registerData.confirmPassword}
+                                                           onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                        /></div>
+
+                        {registerMessage && (
+                            <p className="error-message" style={{ color: registerMessage.startsWith("✅") ? "green" : "red" }}>
+                                {registerMessage}
+                            </p>
+                        )}
+                        <div className="form-actions">
+                            <button className="btn" onClick={handleRegister}>Register</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {modal === "registerOtp" && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2>Verify OTP</h2>
+                            <button className="close-btn" onClick={() => setModal(null)}>×</button>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Enter OTP</label>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={6}
+                                style={{ textAlign: "center", fontSize: "1.2rem", letterSpacing: "0.5rem" }}
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                            />
+                            {retryCount !== null && (
+                                <small style={{ display: "block", marginTop: "0.5rem", color: "gray" }}>
+                                    Retry attempts left: {retryCount}
+                                </small>
+                            )}
+                        </div>
+
+                        <div className="form-actions" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                            <button className="btn" onClick={handleRegisterOtp}>Submit</button>
+
+                            <button
+                                className="btn"
+                                disabled={resendTimer > 0}
+                                onClick={handleResendOtp}
+                            >
+                                {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : "Resend OTP"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
 
             {/* OTP & Reset Modal */}
             {modal === 'otp' && (

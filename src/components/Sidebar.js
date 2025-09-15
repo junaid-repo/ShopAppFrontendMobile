@@ -88,10 +88,10 @@ const Sidebar = ({ onLogout, theme, toggleTheme, isCollapsed = false, onToggleCo
   const menuItems = [
     { key: 'dashboard', label: 'Dashboard', icon: <DashboardIcon style={{ color: iconColors.dashboard }} /> },
     { key: 'products', label: 'Products', icon: <Inventory2Icon style={{ color: iconColors.products }} /> },
+      { key: 'billing', label: 'Billing', icon: <ReceiptIcon style={{ color: iconColors.billing }} /> },
     { key: 'sales', label: 'Sales', icon: <ShoppingCartIcon style={{ color: iconColors.sales }} /> },
     { key: 'customers', label: 'Customers', icon: <PeopleIcon style={{ color: iconColors.customers }} /> },
     { key: 'payments', label: 'Payments', icon: <CreditCardIcon style={{ color: iconColors.payments }} /> },
-    { key: 'billing', label: 'Billing', icon: <ReceiptIcon style={{ color: iconColors.billing }} /> },
     { key: 'reports', label: 'Reports', icon: <TableChartIcon style={{ color: iconColors.reports }} /> },
     { key: 'analytics', label: 'Analytics', icon: <BarChartIcon style={{ color: iconColors.analytics }} /> },
 

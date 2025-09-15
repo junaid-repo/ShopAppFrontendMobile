@@ -1,225 +1,85 @@
 // src/pages/ProductsPage.js
-import React, { useState, useEffect, useRef } from 'react';
-import { mockProducts } from '../mockData';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Modal from '../components/Modal';
 import { useConfig } from "./ConfigProvider";
 import { MdEdit, MdDelete } from "react-icons/md";
 
+/**
+ * Custom hook to debounce a value.
+ * @param {any} value The value to debounce.
+ * @param {number} delay The debounce delay in milliseconds.
+ * @returns {any} The debounced value.
+ */
+const useDebounce = (value, delay) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+};
+
 const ProductsPage = () => {
-    const [products, setProducts] = useState([]);
+    // --- STATE MANAGEMENT ---
+
+    // Original State
+    const [products, setProducts] = useState([]); // Holds data for the CURRENT page only
     const [searchTerm, setSearchTerm] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+
+    // Form State
     const [name, setName] = useState("");
     const [category, setCategory] = useState("");
     const [price, setPrice] = useState("");
-    const [costPrice, setCostPrice] = useState(""); // NEW
+    const [costPrice, setCostPrice] = useState("");
     const [stock, setStock] = useState("");
     const [tax, setTax] = useState("");
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [selectedProductId, setSelectedProductId] = useState(null);
-    const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+
+    // CSV Upload State
     const [csvFile, setCsvFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState(null);
 
-    // Column chooser state with persistence (localStorage)
-    const COLUMN_STORAGE_KEY = 'products_visible_columns_v1';
-    const defaultVisibleColumns = {
-        id: true,
-        name: true,
-        category: true,
-        costPrice: true, // NEW
-        price: true,
-        tax: true,
-        stock: true,
-        status: true,
-        actions: true
-    };
+    // NEW: Pagination & Caching State
+    const [isLoading, setIsLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalProducts, setTotalProducts] = useState(0);
+    const productsCache = useRef({}); // In-memory cache: { cacheKey: { data, totalPages, totalCount } }
+    const ITEMS_PER_PAGE = 10; // Or make this configurable
 
+    // NEW: Backend-driven Sorting State
+    const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
+
+    // NEW: Debounced search term to reduce API calls
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+    // Column Chooser State (Unchanged)
+    const COLUMN_STORAGE_KEY = 'products_visible_columns_v1';
+    const columnsRef = useRef(null);
+    const [isColumnsOpen, setIsColumnsOpen] = useState(false);
+    const defaultVisibleColumns = { id: true, name: true, category: true, costPrice: true, price: true, tax: true, stock: true, status: true, actions: true };
     const [visibleColumns, setVisibleColumns] = useState(() => {
         try {
             const saved = localStorage.getItem(COLUMN_STORAGE_KEY);
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                return { ...defaultVisibleColumns, ...parsed };
-            }
+            return saved ? { ...defaultVisibleColumns, ...JSON.parse(saved) } : defaultVisibleColumns;
         } catch (err) {
-            console.warn("Failed to read saved visible columns:", err);
+            return defaultVisibleColumns;
         }
-        return defaultVisibleColumns;
     });
 
     useEffect(() => {
-        try {
-            localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(visibleColumns));
-        } catch (err) {
-            console.warn("Failed to persist visible columns:", err);
-        }
+        localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(visibleColumns));
     }, [visibleColumns]);
 
-    const [isColumnsOpen, setIsColumnsOpen] = useState(false);
-    const columnsRef = useRef(null);
-
-    // Sorting (for category)
-    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-
-    // Added for file upload
-    const config = useConfig();
-    var apiUrl = "";
-    if (config) {
-        console.log(config.API_URL);
-        apiUrl = config.API_URL;
-    }
-
-    const token = localStorage.getItem("jwt_token");
-
-    // export CSV (updated to include costPrice)
-    const handleExportCSV = () => {
-        if (!products || products.length === 0) {
-            alert("No products available to export.");
-            return;
-        }
-
-        // Ask for confirmation before download
-        const confirmDownload = window.confirm("Do you want to export the products CSV?");
-        if (!confirmDownload) {
-            return;
-        }
-
-        const headers = ["selectedProductId", "name", "category", "costPrice", "price", "stock", "tax"];
-
-        const rows = products.map(p => [
-            p.id,
-            `"${p.name}"`,
-            `"${p.category}"`,
-            p.costPrice !== undefined && p.costPrice !== null ? p.costPrice : "",
-            p.price,
-            p.stock,
-            p.tax
-        ]);
-
-        const csvContent =
-            [headers, ...rows]
-                .map(row => row.join(","))
-                .join("\n");
-
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-
-        // Generate timestamp in YYYYMMDD_HHmmss format
-        const now = new Date();
-        const timestamp = now.getFullYear().toString()
-            + String(now.getMonth() + 1).padStart(2, "0")
-            + String(now.getDate()).padStart(2, "0")
-            + "_"
-            + String(now.getHours()).padStart(2, "0")
-            + String(now.getMinutes()).padStart(2, "0")
-            + String(now.getSeconds()).padStart(2, "0");
-
-        link.setAttribute("download", `Products_Export_${timestamp}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const handleCsvChange = (e) => {
-        const file = e.target.files?.[0] || null;
-        setUploadError(null);
-
-        if (!file) {
-            setCsvFile(null);
-            return;
-        }
-
-        const isCsv = file.type === 'text/csv' || /\.csv$/i.test(file.name);
-        if (!isCsv) {
-            setUploadError('Please select a .csv file.');
-            setCsvFile(null);
-            return;
-        }
-
-        const maxBytes = 5 * 1024 * 1024; // 5MB example
-        if (file.size > maxBytes) {
-            setUploadError('File must be 5 MB or less.');
-            setCsvFile(null);
-            return;
-        }
-
-        setCsvFile(file);
-    };
-
-    const handleCsvSubmit = async (e) => {
-        e.preventDefault();
-        if (!csvFile) return;
-
-        setIsUploading(true);
-        setUploadError(null);
-
-        try {
-            await uploadProductsCsv(csvFile);
-            setIsCsvModalOpen(false);
-            setCsvFile(null);
-        } catch (err) {
-            setUploadError(err?.message || 'Upload failed. Please try again.');
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    async function uploadProductsCsv(file) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const res = await fetch(apiUrl + '/api/shop/bulk-upload', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
-        });
-
-        if (!res.ok) {
-            let message = `Upload failed (${res.status})`;
-            try {
-                const error = await res.json();
-                if (error?.message) message = error.message;
-            } catch {
-                const text = await res.text();
-                if (text) message = text;
-            }
-            throw new Error(message);
-        }
-
-        return res.json();
-    }
-
-    useEffect(() => {
-        fetch(apiUrl + "/api/shop/get/productsList", {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then((data) => {
-                console.log("API response:", data);
-                setProducts(data);
-            })
-            .catch((error) => {
-                console.error("Error fetching customers:", error);
-                alert("Something went wrong while fetching customers.");
-            });
-    }, [apiUrl, token]);
-
-    // close columns dropdown when clicking outside
+    // Close columns dropdown when clicking outside
     useEffect(() => {
         const onClick = (e) => {
             if (columnsRef.current && !columnsRef.current.contains(e.target)) {
@@ -230,29 +90,80 @@ const ProductsPage = () => {
         return () => document.removeEventListener('mousedown', onClick);
     }, []);
 
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
-    const sortedProducts = React.useMemo(() => {
-        if (!sortConfig.key) return filteredProducts;
-        const sorted = [...filteredProducts].sort((a, b) => {
-            const aVal = (a[sortConfig.key] || "").toString().toLowerCase();
-            const bVal = (b[sortConfig.key] || "").toString().toLowerCase();
-            if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-            if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-            return 0;
-        });
-        return sorted;
-    }, [filteredProducts, sortConfig]);
+    // --- API & DATA HANDLING ---
 
-    const toggleSort = (key) => {
-        if (sortConfig.key === key) {
-            setSortConfig(prev => ({ key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }));
-        } else {
-            setSortConfig({ key, direction: 'asc' });
+    const config = useConfig();
+    const apiUrl = config ? config.API_URL : "";
+
+    // NEW: Centralized function to fetch products with caching
+    const fetchProducts = useCallback(async () => {
+        if (!apiUrl) return;
+
+        const sortKey = sortConfig.key || 'createdAt';
+        const sortDir = sortConfig.direction || 'desc';
+        const cacheKey = `page=${currentPage}&limit=${ITEMS_PER_PAGE}&search=${debouncedSearchTerm}&sort=${sortKey}&dir=${sortDir}`;
+
+        // 1. Check cache first
+        if (productsCache.current[cacheKey]) {
+            const cached = productsCache.current[cacheKey];
+            setProducts(cached.data);
+            setTotalPages(cached.totalPages);
+            setTotalProducts(cached.totalCount);
+            return;
         }
-    };
+
+        // 2. Fetch from API if not in cache
+        setIsLoading(true);
+        try {
+            const url = new URL(`${apiUrl}/api/shop/get/withCache/productsList`);
+            url.searchParams.append('page', currentPage);
+            url.searchParams.append('limit', ITEMS_PER_PAGE);
+            url.searchParams.append('sort', sortKey);
+            url.searchParams.append('dir', sortDir);
+            if (debouncedSearchTerm) {
+                url.searchParams.append('search', debouncedSearchTerm);
+            }
+
+            const response = await fetch(url, { method: "GET", credentials: 'include' });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+            // Backend should return: { data: [], totalPages: N, totalCount: N }
+            const result = await response.json();
+
+            // 3. Update state and cache
+            setProducts(result.data || []);
+            setTotalPages(result.totalPages || 0);
+            setTotalProducts(result.totalCount || 0);
+            productsCache.current[cacheKey] = result;
+
+        } catch (error) {
+            console.error("Error fetching products:", error);
+            alert("Something went wrong while fetching products.");
+            setProducts([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [apiUrl, currentPage, debouncedSearchTerm, sortConfig]);
+
+    // Main effect to trigger fetching data
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
+
+    // Effect to reset page and clear cache when search or sort changes
+    useEffect(() => {
+        setCurrentPage(1);
+        productsCache.current = {};
+    }, [debouncedSearchTerm, sortConfig]);
+
+    // Helper to invalidate cache and refetch current page data
+    const invalidateCacheAndRefetch = useCallback(() => {
+        productsCache.current = {};
+        fetchProducts();
+    }, [fetchProducts]);
+
+    // --- EVENT HANDLERS ---
 
     const handleEditClick = (product) => {
         setSelectedProductId(product.id);
@@ -265,473 +176,350 @@ const ProductsPage = () => {
         setIsUpdateModalOpen(true);
     };
 
-    const handleDeleteProduct = async (id) => {
-        if (window.confirm("Are you sure you want to delete ")) {
-            try {
-                const response = await fetch(
-                    `${apiUrl}/api/shop/product/delete/${id}`,
-                    {
-                        method: "DELETE",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`,
-                        }
-                    }
-                );
+    const resetForm = () => {
+        setName("");
+        setCategory("");
+        setPrice("");
+        setStock("");
+        setTax("");
+        setCostPrice("");
+        setSelectedProductId(null);
+    };
 
+    // UPDATED: CUD operations now invalidate the cache
+    const handleAddProduct = async (e) => {
+        e.preventDefault();
+        try {
+            const payload = { name, category, price, costPrice, stock, tax };
+            const response = await fetch(`${apiUrl}/api/shop/create/product`, {
+                method: "POST",
+                credentials: 'include',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+            invalidateCacheAndRefetch();
+            setIsModalOpen(false);
+            resetForm();
+        } catch (error) {
+            console.error("Error adding product:", error);
+            alert("Something went wrong while adding the product.");
+        }
+    };
+
+    const handleUpdateProduct = async (e) => {
+        e.preventDefault();
+        try {
+            const payload = { selectedProductId, name, category, price, costPrice, stock, tax };
+            const response = await fetch(`${apiUrl}/api/shop/update/product`, {
+                method: "PUT",
+                credentials: 'include',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+
+            invalidateCacheAndRefetch();
+            setIsUpdateModalOpen(false);
+            resetForm();
+        } catch (err) {
+            console.error("Error updating product:", err);
+            alert("Failed to update product");
+        }
+    };
+
+    const handleDeleteProduct = async (id) => {
+        if (window.confirm("Are you sure you want to delete this product?")) {
+            try {
+                const response = await fetch(`${apiUrl}/api/shop/product/delete/${id}`, {
+                    method: "DELETE",
+                    credentials: 'include'
+                });
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-                setProducts(prev => prev.filter(c => c.id !== id));
+                invalidateCacheAndRefetch();
             } catch (error) {
                 console.error("Error deleting product:", error);
                 alert("Something went wrong while deleting the product.");
             }
         }
-        setIsModalOpen(false);
-    }
+    };
 
-    const handleAddProduct = async (e) => {
+    const handleCsvSubmit = async (e) => {
         e.preventDefault();
+        if (!csvFile) return;
+        setIsUploading(true);
+        setUploadError(null);
+        try {
+            const formData = new FormData();
+            formData.append('file', csvFile);
+            const res = await fetch(`${apiUrl}/api/shop/bulk-upload`, {
+                method: 'POST',
+                credentials: 'include',
+                body: formData,
+            });
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(errorText || `Upload failed (${res.status})`);
+            }
+
+            invalidateCacheAndRefetch();
+            setIsCsvModalOpen(false);
+            setCsvFile(null);
+        } catch (err) {
+            setUploadError(err?.message || 'Upload failed. Please try again.');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    // UPDATED: Export should hit a dedicated backend endpoint for efficiency
+    const handleExportCSV = async () => {
+        if (totalProducts === 0) {
+            alert("No products to export.");
+            return;
+        }
+        if (!window.confirm(`Export all ${totalProducts} filtered products to CSV?`)) return;
 
         try {
-            const payload = { name, category, price, costPrice, stock, tax };
-            const response = await fetch(apiUrl + "/api/shop/create/product", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            // This endpoint should be created on your backend to handle CSV generation
+            const url = new URL(`${apiUrl}/api/shop/export/products`);
+            if (debouncedSearchTerm) url.searchParams.append('search', debouncedSearchTerm);
+            if (sortConfig.key) {
+                url.searchParams.append('sort', sortConfig.key);
+                url.searchParams.append('dir', sortConfig.direction);
             }
 
-            if (data && data.id) {
-                setProducts(prev => [data, ...prev]);
-            } else {
-                fetch(apiUrl + "/api/shop/get/productsList", {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`,
-                    },
-                }).then(r => r.json()).then(setProducts).catch(() => { });
-            }
-
-        } catch (error) {
-            console.error("Error adding product:", error);
-            alert("Something went wrong while adding the product.");
+            // Use anchor tag to trigger download from the backend response
+            const link = document.createElement("a");
+            link.href = url.toString();
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+            link.setAttribute("download", `Products_Export_${timestamp}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            console.error("Error exporting CSV:", err);
+            alert("Failed to export products.");
         }
+    };
 
-        // reset form
-        setName(""); setCategory(""); setPrice(""); setStock(""); setTax(""); setCostPrice("");
-        setIsModalOpen(false);
-    }
+    const handleCsvChange = (e) => {
+        const file = e.target.files?.[0] || null;
+        setUploadError(null);
+        if (file) {
+            const isCsv = file.type === 'text/csv' || /\.csv$/i.test(file.name);
+            const maxBytes = 5 * 1024 * 1024; // 5MB
+            if (!isCsv) {
+                setUploadError('Please select a .csv file.');
+            } else if (file.size > maxBytes) {
+                setUploadError('File must be 5 MB or less.');
+            } else {
+                setCsvFile(file);
+            }
+        } else {
+            setCsvFile(null);
+        }
+    };
 
-    const handleUpdateProduct = (e) => {
-        e.preventDefault();
-
-        const payload = { selectedProductId, name, category, price, costPrice, stock, tax };
-
-        fetch(`${apiUrl}/api/shop/update/product`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, },
-            body: JSON.stringify(payload),
-        })
-            .then((res) => {
-                if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
-                return res.json();
-            })
-            .then((data) => {
-                if (data && data.id) {
-                    setProducts(prev => prev.map(p => p.id === data.id ? data : p));
-                } else {
-                    fetch(apiUrl + "/api/shop/get/productsList", {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`,
-                        },
-                    }).then(r => r.json()).then(setProducts).catch(() => { });
-                }
-                setIsUpdateModalOpen(false);
-                setSelectedProductId(null);
-                setName(""); setCategory(""); setPrice(""); setStock(""); setTax(""); setCostPrice("");
-            })
-            .catch((err) => {
-                console.error("Error updating product:", err);
-                alert("Failed to update product");
-            });
+    // UPDATED: Sort handler now just updates state
+    const toggleSort = (key) => {
+        setSortConfig(prev => ({
+            key,
+            direction: (prev.key === key && prev.direction === 'asc') ? 'desc' : 'asc'
+        }));
     };
 
     const toggleColumn = (col) => {
         setVisibleColumns(prev => ({ ...prev, [col]: !prev[col] }));
     };
 
-    const selectedColsCount = Object.values(visibleColumns).filter(Boolean).length;
-    const columnsButtonLabel = selectedColsCount === Object.keys(visibleColumns).length
-        ? 'Columns'
-        : `Columns (${selectedColsCount})`;
+    // --- RENDER LOGIC & JSX ---
 
-    // -------------------------
-    // RETURN / JSX
-    // -------------------------
+    const selectedColsCount = Object.values(visibleColumns).filter(Boolean).length;
+    const columnsButtonLabel = selectedColsCount === Object.keys(visibleColumns).length ? 'Columns' : `Columns (${selectedColsCount})`;
+
+    // NEW: Pagination Component
+    const Pagination = () => {
+        if (totalPages <= 1) return null;
+
+        const getPaginationItems = () => {
+            const items = [];
+            if (totalPages <= 5) {
+                for (let i = 1; i <= totalPages; i++) items.push(i);
+                return items;
+            }
+            items.push(1);
+            if (currentPage > 3) items.push('...');
+            if (currentPage > 2) items.push(currentPage - 1);
+            if (currentPage !== 1 && currentPage !== totalPages) items.push(currentPage);
+            if (currentPage < totalPages - 1) items.push(currentPage + 1);
+            if (currentPage < totalPages - 2) items.push('...');
+            items.push(totalPages);
+            return [...new Set(items)];
+        };
+
+        return (
+            <div className="pagination">
+
+                <div className="pagination-controls">
+                    <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
+                        &laquo; Previous
+                    </button>
+                    {getPaginationItems().map((page, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setCurrentPage(page)}
+                            className={currentPage === page ? 'active' : ''}
+                            disabled={page === '...'}
+                        >
+                            {page}
+                        </button>
+                    ))}
+                    <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
+                        Next &raquo;
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="page-container">
             <h2>Products</h2>
 
-            {/* Search Bar Row */}
-            <div
-                className="page-header"
-                style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}
-            >
+            <div className="page-header">
                 <input
                     type="text"
                     placeholder="Search products..."
                     className="search-bar"
+                    value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
 
-            {/* Buttons Row: actions on LEFT, Columns button on RIGHT */}
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 12,
-                }}
-            >
-                {/* Left: Action Buttons (explicit type="button" to avoid accidental form submit) */}
-                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                    <button
-                        type="button"
-                        className="btn"
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        Add Products
-                    </button>
-                    <button
-                        type="button"
-                        className="btn"
-                        onClick={() => setIsCsvModalOpen(true)}
-                    >
-                        Upload Multiple
-                    </button>
-                    <button
-                        type="button"
-                        className="btn"
-                        onClick={handleExportCSV}
-                    >
-                        Export CSV
-                    </button>
+            <div className="actions-toolbar">
+                <div className="actions-group-left">
+                    <button type="button" className="btn" onClick={() => setIsModalOpen(true)}>Add Product</button>
+                    <button type="button" className="btn" onClick={() => setIsCsvModalOpen(true)}>Upload CSV</button>
+                    <button type="button" className="btn" onClick={handleExportCSV}>Export CSV</button>
                 </div>
 
-                {/* Right: Columns Button + Dropdown */}
-                <div ref={columnsRef} style={{ position: "relative" }}>
-                    <button
-                        type="button"
-                        onClick={() => setIsColumnsOpen((v) => !v)}
-                        aria-expanded={isColumnsOpen}
-                        style={{
-                            backgroundColor: "#fff",
-                            border: "1px solid var(--primary-color)",
-                            color: "var(--primary-color)",
-                            padding: "4px 10px",
-                            fontSize: "13px",
-                            borderRadius: "25%", // as requested
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 8,
-                        }}
-                    >
+                <div ref={columnsRef} className="columns-dropdown-container">
+                    <button type="button" onClick={() => setIsColumnsOpen(v => !v)} aria-expanded={isColumnsOpen} className="btn btn-outline">
                         {columnsButtonLabel} ▾
                     </button>
-
                     {isColumnsOpen && (
-                        <div
-                            style={{
-                                position: "absolute",
-                                right: 0,
-                                top: "calc(100% + 8px)",
-                                background: "#fff",
-                                border: "1px solid #e6e6e6",
-                                borderRadius: 10,
-                                boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
-                                padding: 10,
-                                zIndex: 1000,
-                                minWidth: 220,
-                                maxWidth: 320
-                            }}
-                        >
-                            <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+                        <div className="columns-dropdown-menu">
+                            <div className="columns-list">
                                 {Object.keys(visibleColumns).map(col => (
-                                    <label
-                                        key={col}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 8,
-                                            padding: '6px 6px',
-                                            borderRadius: 6,
-                                            cursor: 'pointer',
-                                            userSelect: 'none'
-                                        }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')}
-                                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                                    >
+                                    <label key={col} className="column-item">
                                         <input
                                             type="checkbox"
                                             checked={visibleColumns[col]}
                                             onChange={() => toggleColumn(col)}
-                                            style={{
-                                                width: 16,
-                                                height: 16,
-                                                margin: 0,
-                                                marginRight: 8,
-                                                accentColor: 'var(--primary-color)'
-                                            }}
                                         />
-                                        <span style={{ textTransform: 'capitalize', fontSize: 14 }}>{col.replace(/([A-Z])/g, ' $1')}</span>
+                                        <span>{col.replace(/([A-Z])/g, ' $1')}</span>
                                     </label>
                                 ))}
                             </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setVisibleColumns(defaultVisibleColumns)}
-                                    style={{
-                                        background: '#f6f6f6',
-                                        border: '1px solid #ddd',
-                                        padding: '6px 10px',
-                                        borderRadius: 6,
-                                        fontSize: 12,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Show All
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsColumnsOpen(false)}
-                                    style={{
-                                        background: 'var(--primary-color)',
-                                        color: '#fff',
-                                        border: 'none',
-                                        padding: '6px 10px',
-                                        borderRadius: 6,
-                                        fontSize: 12,
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Done
-                                </button>
+                            <div className="columns-dropdown-footer">
+                                <button type="button" onClick={() => setVisibleColumns(defaultVisibleColumns)}>Show All</button>
+                                <button type="button" onClick={() => setIsColumnsOpen(false)}>Done</button>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="glass-card" style={{ marginTop: 12 }}>
-                <table
-                    className="data-table"
-                    style={{
-                        width: "100%",
-                        borderCollapse: "collapse" // ensures no extra spacing between cells
-                    }}
-                >
+            <div className="glass-card">
+                <table className="data-table">
                     <thead>
                     <tr>
-                        {visibleColumns.name && (
-                            <th style={{ padding: "6px 8px", textAlign: "left" }}>Name</th>
-                        )}
-                        {visibleColumns.costPrice && (
-                            <th style={{ padding: "6px 8px", textAlign: "left" }}>Cost Price</th>
-                        )}
-                        {visibleColumns.price && (
-                            <th style={{ padding: "6px 8px", textAlign: "left" }}>Price</th>
-                        )}
-                        {visibleColumns.stock && (
-                            <th style={{ padding: "6px 8px", textAlign: "left" }}>Stock</th>
-                        )}
-                        {visibleColumns.status && (
-                            <th style={{ padding: "6px 8px", textAlign: "left" }}>Status</th>
-                        )}
-                        {visibleColumns.actions && (
-                            <th style={{ padding: "6px 8px", textAlign: "left" }}>Update</th>
-                        )}
+                        {visibleColumns.name && <th>Name</th>}
+
+                        {visibleColumns.costPrice && <th>Cost Price</th>}
+                        {visibleColumns.price && <th>Price</th>}
+                        {visibleColumns.stock && <th>Stock</th>}
+                        {visibleColumns.actions && <th>Actions</th>}
                     </tr>
                     </thead>
                     <tbody>
-                    {sortedProducts.map((product) => (
-                        <tr key={product.id} style={{ padding: 0 }}>
-                            {visibleColumns.name && (
-                                <td style={{ padding: "4px 8px" }}>{product.name}</td>
-                            )}
-                            {visibleColumns.costPrice && (
-                                <td style={{ padding: "4px 8px" }}>
-                                    {product.costPrice !== undefined && product.costPrice !== null
-                                        ? `₹${Number(product.costPrice).toLocaleString()}`
-                                        : "-"}
-                                </td>
-                            )}
-                            {visibleColumns.price && (
-                                <td style={{ padding: "4px 8px" }}>
-                                    ₹{product.price.toLocaleString()}
-                                </td>
-                            )}
-                            {visibleColumns.stock && (
-                                <td style={{ padding: "4px 8px" }}>{product.stock}</td>
-                            )}
-                            {visibleColumns.status && (
-                                <td style={{ padding: "4px 8px" }}>
-              <span
-                  className={
-                      product.stock > 0 ? "status-instock" : "status-outofstock"
-                  }
-              >
-                {product.status}
-              </span>
-                                </td>
-                            )}
-                            {visibleColumns.actions && (
-                                <td style={{ padding: "4px 8px" }}>
-              <span
-                  onClick={() => handleEditClick(product)}
-                  style={{
-                      cursor: "pointer",
-                      backgroundColor: "#e0f7fa",
-                      borderRadius: "6px",
-                      padding: "4px",
-                      marginRight: "6px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center"
-                  }}
-                  title="Edit Product"
-              >
-                <MdEdit size={16} color="#00796b" />
-              </span>
+                    {isLoading ? (
+                        <tr><td colSpan={selectedColsCount} style={{ textAlign: 'center', padding: '20px' }}>Loading...</td></tr>
+                    ) : products.length > 0 ? (
+                        products.map(product => (
+                            <tr key={product.id}>
+                                {visibleColumns.name && <td>{product.name}</td>}
 
-                                    <span
-                                        onClick={() => handleDeleteProduct(product.id)}
-                                        style={{
-                                            cursor: "pointer",
-                                            backgroundColor: "#ffebee",
-                                            borderRadius: "6px",
-                                            padding: "4px",
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            justifyContent: "center"
-                                        }}
-                                        title="Delete Product"
-                                    >
-                <MdDelete size={16} color="#d32f2f" />
-              </span>
-                                </td>
-                            )}
-                        </tr>
-                    ))}
+                                {visibleColumns.costPrice && <td>{product.costPrice != null ? `₹${Number(product.costPrice).toLocaleString()}` : '–'}</td>}
+                                {visibleColumns.price && <td>₹{product.price.toLocaleString()}</td>}
+
+                                {visibleColumns.stock && <td>{product.stock}</td>}
+                                {visibleColumns.actions && (
+                                    <td>
+                                        <div className="action-icons">
+                                                <span onClick={() => handleEditClick(product)} className="action-icon edit" title="Edit Product">
+                                                    <MdEdit size={18} />
+                                                </span>
+                                            <span onClick={() => handleDeleteProduct(product.id)} className="action-icon delete" title="Delete Product">
+                                                    <MdDelete size={18} />
+                                                </span>
+                                        </div>
+                                    </td>
+                                )}
+                            </tr>
+                        ))
+                    ) : (
+                        <tr><td colSpan={selectedColsCount} style={{ textAlign: 'center', padding: '20px' }}>No products found.</td></tr>
+                    )}
                     </tbody>
+
                 </table>
             </div>
 
+            <Pagination />
 
-            {/* Add / Update / CSV Modals (unchanged) */}
+            {/* --- MODALS (Largely Unchanged) --- */}
             <Modal title="Add New Product" show={isModalOpen} onClose={() => setIsModalOpen(false)}>
                 <form onSubmit={handleAddProduct}>
-                    <div className="form-group">
-                        <label>Product Name</label>
-                        <input type="text" required value={name} onChange={(e) => setName(e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                        <label>Category</label>
-                        <select required value={category} onChange={(e) => setCategory(e.target.value)}>
-                            <option value="">-- Select Category --</option>
-                            <option value="Smatphones">Smatphones</option>
-                            <option value="Laptops and Computers">Laptops and Computers</option>
-                            <option value="Audio">Audio</option>
-                            <option value="Videos">Videos</option>
-                            <option value="Accessories">Accessories</option>
-                            <option value="Others">Others</option>
-                        </select>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Cost Price</label>
-                        <input type="number" required value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Price</label>
-                        <input type="number" required value={price} onChange={(e) => setPrice(e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                        <label>Stock Quantity</label>
-                        <input type="number" required value={stock} onChange={(e) => setStock(e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                        <label>Tax Percent</label>
-                        <input type="number" required value={tax} onChange={(e) => setTax(e.target.value)} />
-                    </div>
-                    <div className="form-actions">
-                        <button type="submit" className="btn">Add Product</button>
-                    </div>
+                    {/* Form groups for name, category, costPrice, price, stock, tax */}
+                    <div className="form-group"><label>Product Name</label><input type="text" required value={name} onChange={e => setName(e.target.value)} /></div>
+                    <div className="form-group"><label>Category</label><select required value={category} onChange={e => setCategory(e.target.value)}><option value="">-- Select --</option><option>Smartphones</option><option>Laptops</option><option>Audio</option><option>Accessories</option><option>Others</option></select></div>
+                    <div className="form-group"><label>Cost Price</label><input type="number" step="0.01" required value={costPrice} onChange={e => setCostPrice(e.target.value)} /></div>
+                    <div className="form-group"><label>Selling Price</label><input type="number" step="0.01" required value={price} onChange={e => setPrice(e.target.value)} /></div>
+                    <div className="form-group"><label>Stock Quantity</label><input type="number" required value={stock} onChange={e => setStock(e.target.value)} /></div>
+                    <div className="form-group"><label>Tax Percent</label><input type="number" step="0.1" required value={tax} onChange={e => setTax(e.target.value)} /></div>
+                    <div className="form-actions"><button type="submit" className="btn">Add Product</button></div>
                 </form>
             </Modal>
 
             <Modal title="Update Product" show={isUpdateModalOpen} onClose={() => setIsUpdateModalOpen(false)}>
                 <form onSubmit={handleUpdateProduct}>
-                    <div className="form-group">
-                        <label>Product Name</label>
-                        <input type="text" required value={name} onChange={(e) => setName(e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                        <label>Category</label>
-                        <input type="text" required value={category} onChange={(e) => setCategory(e.target.value)} />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Cost Price</label>
-                        <input type="number" required value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Price</label>
-                        <input type="number" required value={price} onChange={(e) => setPrice(e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                        <label>Stock Quantity</label>
-                        <input type="number" required value={stock} onChange={(e) => setStock(e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                        <label>Tax Percent</label>
-                        <input type="number" required value={tax} onChange={(e) => setTax(e.target.value)} />
-                    </div>
-                    <div className="form-actions">
-                        <button type="submit" className="btn">Update Product</button>
-                    </div>
+                    {/* Form groups for name, category, costPrice, price, stock, tax */}
+                    <div className="form-group"><label>Product Name</label><input type="text" required value={name} onChange={e => setName(e.target.value)} /></div>
+                    <div className="form-group"><label>Category</label><input type="text" required value={category} onChange={e => setCategory(e.target.value)} /></div>
+                    <div className="form-group"><label>Cost Price</label><input type="number" step="0.01" required value={costPrice} onChange={e => setCostPrice(e.target.value)} /></div>
+                    <div className="form-group"><label>Selling Price</label><input type="number" step="0.01" required value={price} onChange={e => setPrice(e.target.value)} /></div>
+                    <div className="form-group"><label>Stock Quantity</label><input type="number" required value={stock} onChange={e => setStock(e.target.value)} /></div>
+                    <div className="form-group"><label>Tax Percent</label><input type="number" step="0.1" required value={tax} onChange={e => setTax(e.target.value)} /></div>
+                    <div className="form-actions"><button type="submit" className="btn">Update Product</button></div>
                 </form>
             </Modal>
 
-            <Modal title="Upload Products via CSV" show={isCsvModalOpen} onClose={() => { setIsCsvModalOpen(false); setCsvFile(null); setUploadError(null); }}>
+            <Modal title="Upload Products via CSV" show={isCsvModalOpen} onClose={() => setIsCsvModalOpen(false)}>
                 <form onSubmit={handleCsvSubmit}>
                     <div className="form-group">
                         <label>CSV file</label>
                         <input type="file" accept=".csv,text/csv" onChange={handleCsvChange} required />
                         {csvFile && (<small>Selected: {csvFile.name} ({Math.round(csvFile.size / 1024)} KB)</small>)}
                         {uploadError && (<div className="error">{uploadError}</div>)}
-                        <div className="help-text">Expected columns: name, category, price, costPrice, stock, tax (header row recommended).</div>
+                        <div className="help-text">Header required: name, category, price, costPrice, stock, tax.</div>
                     </div>
-
                     <div className="form-actions">
-                        <button type="button" className="btn btn-link" onClick={() => { setIsCsvModalOpen(false); setCsvFile(null); setUploadError(null); }}>Cancel</button>
+                        <button type="button" className="btn btn-link" onClick={() => setIsCsvModalOpen(false)}>Cancel</button>
                         <button type="submit" className="btn" disabled={!csvFile || isUploading}>{isUploading ? 'Uploading…' : 'Upload'}</button>
                     </div>
                 </form>
@@ -741,3 +529,7 @@ const ProductsPage = () => {
 };
 
 export default ProductsPage;
+
+// Recommended CSS for Pagination and other new elements:
+
+

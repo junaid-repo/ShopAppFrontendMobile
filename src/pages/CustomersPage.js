@@ -1,9 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Modal from '../components/Modal';
 import './CustomersPage.css';
 import { FaEnvelope, FaPhone, FaMoneyBillWave, FaTrash } from 'react-icons/fa';
 import { useConfig } from "./ConfigProvider";
 import { authFetch } from "../utils/authFetch";
+
+const useDebounce = (value, delay) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+};
 
 const CustomersPage = () => {
     const [customers, setCustomers] = useState([]);
@@ -14,32 +27,88 @@ const CustomersPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const config = useConfig();
-    const apiUrl = config?.API_URL || "";
-    const token = localStorage.getItem('jwt_token');
+    var apiUrl =  "";
 
-    // Fetch customers on component mount
-    useEffect(() => {
-        fetchCustomers();
-    }, []);
+    // NEW: Pagination & Caching State
+    const [isLoading, setIsLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalCustomers, setTotalCustomers] = useState(0);
+    const productsCache = useRef({}); // In-memory cache: { cacheKey: { data, totalPages, totalCount } }
+    const ITEMS_PER_PAGE = 12; // Or make this configurable
 
-    const fetchCustomers = async () => {
+    // NEW: Debounced search term to reduce API calls
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+
+
+    if(config){
+        console.log(config.API_URL);
+        apiUrl=config.API_URL;
+    }
+
+    const fetchCustomers = useCallback(async () => {
+        if (!apiUrl) return;
+
+
+
+
+        // 2. Fetch from API if not in cache
+        // setIsLoading(true);
         try {
-            const response = await authFetch(`${apiUrl}/api/shop/get/customersList`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            const url = new URL(`${apiUrl}/api/shop/get/cacheable/customersList`);
+            url.searchParams.append('page', currentPage);
+            url.searchParams.append('limit', ITEMS_PER_PAGE);
+            console.log("Fetching customers with URL:", url.toString());
+            if (debouncedSearchTerm) {
+                url.searchParams.append('search', debouncedSearchTerm);
+            }
 
+            const response = await fetch(url, { method: "GET", credentials: 'include' });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            setCustomers(data);
+
+            // Backend should return: { data: [], totalPages: N, totalCount: N }
+            const result = await response.json();
+
+            // 3. Update state and cache
+            setCustomers(result.data || []);
+            setTotalPages(result.totalPages || 0);
+            setTotalCustomers(result.totalCount || 0);
+
+
         } catch (error) {
             console.error("Error fetching customers:", error);
             alert("Something went wrong while fetching customers.");
+            setCustomers([]);
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, [apiUrl, currentPage, debouncedSearchTerm]);
+
+    // Fetch customers on load
+    useEffect(() => {
+        fetchCustomers();
+    }, [fetchCustomers]);
+
+
+    /* const fetchCustomers = () => {
+         authFetch(apiUrl + "/api/shop/get/customersList", {
+             method: "GET",
+             credentials: 'include',
+             headers: {
+                 "Content-Type": "application/json"
+             }
+         })
+             .then((response) => {
+                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                 return response.json();
+             })
+             .then((data) => setCustomers(data))
+             .catch((error) => {
+                 console.error("Error fetching customers:", error);
+                 alert("Something went wrong while fetching customers.");
+             });
+     };*/
 
     const filteredCustomers = customers.filter(c =>
         c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -58,9 +127,9 @@ const CustomersPage = () => {
 
             const response = await fetch(`${apiUrl}/api/shop/create/customer`, {
                 method: "POST",
+                credentials: 'include',
                 headers: {
-                    "Content-Type": "application/json",
-                    'Authorization': `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload),
             });
@@ -81,9 +150,9 @@ const CustomersPage = () => {
         try {
             const response = await fetch(`${apiUrl}/api/shop/customer/delete/${id}`, {
                 method: "DELETE",
+                credentials: 'include',
                 headers: {
-                    "Content-Type": "application/json",
-                    'Authorization': `Bearer ${token}`
+                    "Content-Type": "application/json"
                 }
             });
 
@@ -95,6 +164,50 @@ const CustomersPage = () => {
             console.error("Error deleting customer:", error);
             alert("Something went wrong while deleting the customer.");
         }
+    };
+
+    const Pagination = () => {
+        if (totalPages <= 1) return null;
+
+        const getPaginationItems = () => {
+            const items = [];
+            if (totalPages <= 5) {
+                for (let i = 1; i <= totalPages; i++) items.push(i);
+                return items;
+            }
+            items.push(1);
+            if (currentPage > 3) items.push('...');
+            if (currentPage > 2) items.push(currentPage - 1);
+            if (currentPage !== 1 && currentPage !== totalPages) items.push(currentPage);
+            if (currentPage < totalPages - 1) items.push(currentPage + 1);
+            if (currentPage < totalPages - 2) items.push('...');
+            items.push(totalPages);
+            return [...new Set(items)];
+        };
+
+        return (
+            <div className="pagination">
+
+                <div className="pagination-controls">
+                    <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>
+                        &laquo; Prev
+                    </button>
+                    {getPaginationItems().map((page, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setCurrentPage(page)}
+                            className={currentPage === page ? 'active' : ''}
+                            disabled={page === '...'}
+                        >
+                            {page}
+                        </button>
+                    ))}
+                    <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>
+                        Next &raquo;
+                    </button>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -153,7 +266,7 @@ const CustomersPage = () => {
                 </div>
             </div>
 
-
+            <Pagination />
             <Modal title="Add New Customer" show={isModalOpen} onClose={() => setIsModalOpen(false)}>
                 <form onSubmit={handleAddCustomer}>
                     <div className="form-group">

@@ -3,10 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { FaUserCircle, FaSignOutAlt, FaSun, FaMoon, FaHome } from 'react-icons/fa';
 import { jwtDecode } from "jwt-decode";
 import { useConfig } from "../pages/ConfigProvider";
+import { useNavigate } from 'react-router-dom';
 
 const Topbar = ({ onLogout, theme, toggleTheme, toggleSidebar, isCollapsed, setCurrentPage }) => {
     const [userName, setUserName] = useState('');
     const [profilePic, setProfilePic] = useState(null);
+    const navigate = useNavigate();
     let apiUrl = "";
     const config = useConfig();
     if (config) {
@@ -18,43 +20,69 @@ const Topbar = ({ onLogout, theme, toggleTheme, toggleSidebar, isCollapsed, setC
 
         (async () => {
             try {
-                if (token) {
-                    const decoded = jwtDecode(token);
-                    const username = decoded.sub;
-                    setUserName(username);
+                const userRes = await fetch(`${apiUrl}/api/shop/user/profile`, {
+                    method: "GET",
+                    credentials: 'include',
+                });
 
-                    const res = await fetch(`${apiUrl}/api/shop/user/${username}/profile-pic`, {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-
-                    if (res.ok) {
-                        const arrayBuffer = await res.arrayBuffer();
-                        const blob = new Blob([arrayBuffer]);
-                        const imageUrl = URL.createObjectURL(blob);
-                        setProfilePic(imageUrl);
-                    } else {
-                        console.error('Failed to fetch profile picture:', res.statusText);
-                    }
+                if (!userRes.ok) {
+                    console.error('Failed to fetch user data:', userRes.statusText);
+                    return;
                 }
+
+                const userData = await userRes.json();
+                const username = userData.username;
+
+                if (!username) {
+                    console.warn('Username is empty, skipping profile pic fetch');
+                    return;
+                }
+
+                setUserName(username); // You can still store it in state
+                console.log("Fetched username:", username);
+
+                // Fetch profile picture
+                const res = await fetch(`${apiUrl}/api/shop/user/${username}/profile-pic`, {
+                    method: "GET",
+                    credentials: 'include',
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (res.ok) {
+                    const arrayBuffer = await res.arrayBuffer();
+                    const blob = new Blob([arrayBuffer]);
+                    const imageUrl = URL.createObjectURL(blob);
+                    setProfilePic(imageUrl);
+                } else {
+                    console.error('Failed to fetch profile picture:', res.statusText);
+                }
+
             } catch (err) {
                 console.error('Failed to load profile pic', err);
             }
         })();
     }, [apiUrl]);
 
+    // helper to navigate internally when setCurrentPage is provided
+    const goTo = (page) => {
+        if (typeof setCurrentPage === 'function') {
+            setCurrentPage(page);
+        } else {
+            navigate(`/${page}`);
+        }
+    };
+
     const handleProfileClick = () => {
-        setCurrentPage('profile');
+        goTo('profile');
     };
 
     const handleLogout = () => {
         const confirmLogout = window.confirm("Do you really want to log out?");
         if (!confirmLogout) return;
         onLogout();
-        setCurrentPage('login');
+        // onLogout in MainLayout already navigates to /login, no need to setCurrentPage('login') here
     };
 
     return (
@@ -73,7 +101,7 @@ const Topbar = ({ onLogout, theme, toggleTheme, toggleSidebar, isCollapsed, setC
             {/* Left section → Home shortcut */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginRight: "12px", marginLeft: "55px" }}>
                 <div
-                    onClick={() =>  setCurrentPage('home')}
+                    onClick={() => goTo('dashboard')}
                     style={{
                         fontSize: "1.75rem",
                         fontWeight: "700",
@@ -84,7 +112,7 @@ const Topbar = ({ onLogout, theme, toggleTheme, toggleSidebar, isCollapsed, setC
                             "lemon_milk_pro_regular_webfont, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
                     }}
                 >
-                    ShopFlow
+                    <h5>Clear Bill</h5>
                 </div>
 
             </div>

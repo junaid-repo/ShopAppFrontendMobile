@@ -79,7 +79,8 @@ const AnalyticsPage = () => {
         try {
             const response = await fetch(`${apiUrl}/api/shop/get/analytics`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json',"Authorization": `Bearer ${token}`, },
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
 

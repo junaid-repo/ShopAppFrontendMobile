@@ -83,70 +83,7 @@ function timeAgo(iso) {
   return `${y}y ago`;
 }
 
-// --- Mock API area (attempt real fetch, fallback to seed) ---
-async function mockFetchRecentReports({ limit = 10 } = {}) {
 
-  try {
-    const response = await fetch('http://localhost:6062/api/shop/report/recent?limit=10', {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Server error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("Fetched recent reports:", data);
-    // If backend returns an array:
-    if (Array.isArray(data)) {
-      return { success: true, reports: data.slice(0, limit) };
-    }
-    // If backend returns { success: true, reports: [...] }
-    if (data && data.reports) {
-      return { success: true, reports: data.reports.slice(0, limit) };
-    }
-
-    // Fallback to empty
-    return { success: false, reports: [] };
-  } catch (error) {
-    console.error("Failed to fetch recent reports:", error);
-    // Fallback seed data
-    const seed = [
-      {
-        id: 'rpt_001',
-        name: 'Sales Report',
-        fromDate: '2025-01-01',
-        toDate: '2025-03-31',
-        createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15m ago
-        fileName: 'sales_2025Q1.pdf',
-        status: 'READY',
-      },
-      {
-        id: 'rpt_002',
-        name: 'Product Report',
-        fromDate: '2025-06-01',
-        toDate: '2025-06-30',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5h ago
-        fileName: 'product_jun_2025.csv',
-        status: 'READY',
-      },
-      {
-        id: 'rpt_003',
-        name: 'Payment Reports',
-        fromDate: '2025-07-01',
-        toDate: '2025-07-31',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2d ago
-        fileName: 'payments_jul_2025.xlsx',
-        status: 'READY',
-      },
-    ];
-    return { success: true, reports: seed.slice(0, limit) };
-  }
-}
 
 function mockGenerateReport(payload) {
   const ts = Date.now();
@@ -225,82 +162,83 @@ const ReportsPage = () => {
     setIsGenerating(true);
 
     try {
-      const payload = { reportType, fromDate, toDate };
-      console.log("Generate Report - Payload:", payload);
-   // alert(token);
-      // POST to backend and expect an Excel binary
-      const response = await fetch(apiUrl+"/api/shop/report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload),
-      });
+        const payload = { reportType, fromDate, toDate };
+        console.log("Generate Report - Payload:", payload);
+        // alert(token);
+        // POST to backend and expect an Excel binary
+        const response = await fetch(apiUrl+"/api/shop/report", {
+            method: "POST",
+            credentials: 'include',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to generate report");
-      }
+        if (!response.ok) {
+            throw new Error("Failed to generate report");
+        }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
 
-      // Format datetime: YYYYMMDD_HHmmss
-      const now = new Date();
-      const dateTimeStr = now.toISOString().replace(/[-:T]/g, "").slice(0, 15);
+        // Format datetime: YYYYMMDD_HHmmss
+        const now = new Date();
+        const dateTimeStr = now.toISOString().replace(/[-:T]/g, "").slice(0, 15);
 
-      // Ensure no leading dot in extension
-      const extension = "xlsx";
-      const cleanExt = extension.replace(/^\.+/, "");
+        // Ensure no leading dot in extension
+        const extension = "xlsx";
+        const cleanExt = extension.replace(/^\.+/, "");
 
-      const clean = str => str.replace(/\.+$/, ""); // remove trailing dots
-      const pureFileName = `${clean(reportType)}_${clean(dateTimeStr)}.${clean(extension)}`;
+        const clean = str => str.replace(/\.+$/, ""); // remove trailing dots
+        const pureFileName = `${clean(reportType)}_${clean(dateTimeStr)}.${clean(extension)}`;
 
-      const osLinks = {
-        windows: `file:///C:/Users/${userName}/Downloads/${pureFileName}`,
-        macos: `file:///Users/${userName}/Downloads/${pureFileName}`,
-        ubuntu: `file:///home/${userName}/Downloads/${pureFileName}`
-      };
+        const osLinks = {
+            windows: `file:///C:/Users/${userName}/Downloads/${pureFileName}`,
+            macos: `file:///Users/${userName}/Downloads/${pureFileName}`,
+            ubuntu: `file:///home/${userName}/Downloads/${pureFileName}`
+        };
 
-      // Create downloadable link element
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = pureFileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+        // Create downloadable link element
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = pureFileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
 
-      // Store clickable link in fileName property
-      // const fileUrl = osLinks.windows; // or macos / ubuntu
+        // Store clickable link in fileName property
+        // const fileUrl = osLinks.windows; // or macos / ubuntu
 
-      setRecentReports(prev => [
-        {
-          id: Date.now(),
-          name: reportType,
-          fromDate,
-          toDate,
-          createdAt: now.toISOString(),
-          fileName: pureFileName,
-        },
-        ...prev
-      ].slice(0, 10));
+        setRecentReports(prev => [
+            {
+                id: Date.now(),
+                name: reportType,
+                fromDate,
+                toDate,
+                createdAt: now.toISOString(),
+                fileName: pureFileName,
+            },
+            ...prev
+        ].slice(0, 10));
 
-      // Call save API with details
-      const saveReportPayload = {
-        reportType,
-        fromDate,
-        toDate,
-        generatedAt: now.toISOString(),
-        fileName: pureFileName
-      };
+        // Call save API with details
+        const saveReportPayload = {
+            reportType,
+            fromDate,
+            toDate,
+            generatedAt: now.toISOString(),
+            fileName: pureFileName
+        };
 
-      await fetch(apiUrl+"/api/shop/report/saveDetails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify(saveReportPayload)
-      });
+        await fetch(apiUrl+"/api/shop/report/saveDetails", {
+            method: "POST",
+            credentials: 'include',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(saveReportPayload)
+        });
 
-      window.URL.revokeObjectURL(url);
+        window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
       alert("Something went wrong while generating the report.");
@@ -320,6 +258,71 @@ const ReportsPage = () => {
     });
     setShowTypeMenu(true);
   };
+
+    // --- Mock API area (attempt real fetch, fallback to seed) ---
+    async function mockFetchRecentReports({ limit = 10 } = {}) {
+
+        try {
+            const response = await fetch(apiUrl+'/api/shop/report/recent?limit=10', {
+                method: "GET",
+                credentials: 'include',
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log("Fetched recent reports:", data);
+            // If backend returns an array:
+            if (Array.isArray(data)) {
+                return { success: true, reports: data.slice(0, limit) };
+            }
+            // If backend returns { success: true, reports: [...] }
+            if (data && data.reports) {
+                return { success: true, reports: data.reports.slice(0, limit) };
+            }
+
+            // Fallback to empty
+            return { success: false, reports: [] };
+        } catch (error) {
+            console.error("Failed to fetch recent reports:", error);
+            // Fallback seed data
+            const seed = [
+                {
+                    id: 'rpt_001',
+                    name: 'Sales Report',
+                    fromDate: '2025-01-01',
+                    toDate: '2025-03-31',
+                    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15m ago
+                    fileName: 'sales_2025Q1.pdf',
+                    status: 'READY',
+                },
+                {
+                    id: 'rpt_002',
+                    name: 'Product Report',
+                    fromDate: '2025-06-01',
+                    toDate: '2025-06-30',
+                    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5h ago
+                    fileName: 'product_jun_2025.csv',
+                    status: 'READY',
+                },
+                {
+                    id: 'rpt_003',
+                    name: 'Payment Reports',
+                    fromDate: '2025-07-01',
+                    toDate: '2025-07-31',
+                    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2d ago
+                    fileName: 'payments_jul_2025.xlsx',
+                    status: 'READY',
+                },
+            ];
+            return { success: true, reports: seed.slice(0, limit) };
+        }
+    }
 
   // close menu when clicking outside, on scroll/resize
   useEffect(() => {

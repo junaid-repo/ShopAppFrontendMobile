@@ -7,7 +7,7 @@ import './DashboardPage.css';
 import { useNavigate } from 'react-router-dom';
 import { useConfig } from "./ConfigProvider";
 
-const DashboardPage = () => {
+const DashboardPage = ({ setCurrentPage }) => {
     const [dashboardData, setDashboardData] = useState({});
     const [sales, setSales] = useState([]);
     const [timeRange, setTimeRange] = useState('today');
@@ -24,6 +24,15 @@ const DashboardPage = () => {
     const config = useConfig();
     const navigate = useNavigate();
 
+    // helper to navigate or set current page when using internal navigation
+    const goTo = (page) => {
+        if (typeof setCurrentPage === 'function') {
+            setCurrentPage(page);
+        } else {
+            navigate(`/${page}`);
+        }
+    };
+
     let apiUrl = "";
     if (config) {
         apiUrl = config.API_URL;
@@ -36,9 +45,10 @@ const DashboardPage = () => {
     useEffect(() => {
         fetch(`${apiUrl}/api/shop/get/dashboardDetails/${timeRange}`, {
             method: "GET",
+            credentials: 'include',
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`, // 🔑 Attach JWT
+                "Content-Type": "application/json"
+                // 🔑 Attach JWT
             },
         })
             .then((res) => {
@@ -55,11 +65,15 @@ const DashboardPage = () => {
     // 📌 Fetch Sales
     useEffect(() => {
         //alert(token);
-        fetch(`${apiUrl}/api/shop/get/sales`, {
+        fetch(`${apiUrl}/api/shop/get/count/sales`, {
             method: "GET",
+            credentials: 'include',
+            params: {
+                count: 3 // ✅ sent to backend
+            },
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`, // 🔑 Attach JWT
+                "Content-Type": "application/json"
+                // 🔑 Attach JWT
             },
         })
             .then((res) => {
@@ -82,9 +96,10 @@ const DashboardPage = () => {
             const payload = { name, email, phone };
             const response = await fetch(`${apiUrl}/api/shop/create/customer`, {
                 method: "POST",
+                credentials: 'include',
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`, // 🔑 Attach JWT
+                    "Content-Type": "application/json"
+                    // 🔑 Attach JWT
                 },
                 body: JSON.stringify(payload),
             });
@@ -108,9 +123,9 @@ const DashboardPage = () => {
             const payload = { name, category, price, stock, tax };
             const response = await fetch(`${apiUrl}/api/shop/create/product`, {
                 method: "POST",
+                credentials: 'include',
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`, // 🔑 Attach JWT
+                    "Content-Type": "application/json"// 🔑 Attach JWT
                 },
                 body: JSON.stringify(payload),
             });
@@ -185,12 +200,12 @@ const DashboardPage = () => {
             <div className="quick-shortcuts glass-card" >
                 <h3 style ={{ marginTop: '30px', flexDirection: 'column', gap: '1rem' }}>Quick Shortcuts</h3>
                 <div className="shortcuts-container">
-                    <button className="btn" onClick={() => navigate("/billing")}>New Billing</button>
+                    <button className="btn" onClick={() => goTo('billing')}>New Billing</button>
                     <button className="btn" onClick={() => setIsAddProdModalOpen(true)}>Add Product</button>
                     <button className="btn" onClick={() => setIsNewCusModalOpen(true)}>New Customer</button>
-                    <button className="btn" onClick={() => navigate("/reports")}>Generate Report</button>
-                    <button className="btn" onClick={() => navigate("/analytics")}>Analytics</button>
-                    <button className="btn" onClick={() => navigate("/payments")}>Payments</button>
+                    <button className="btn" onClick={() => goTo('reports')}>Generate Report</button>
+                    <button className="btn" onClick={() => goTo('analytics')}>Analytics</button>
+                    <button className="btn" onClick={() => goTo('payments')}>Payments</button>
                 </div>
             </div>
 

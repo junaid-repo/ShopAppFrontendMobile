@@ -108,15 +108,15 @@ const MainLayout = ({ onLogout, toggleTheme, theme }) => {
                 />
                 <main style={{ flex: 1, padding: '8px' }}>
                     {/* Render the selected page directly */}
-                    {currentPage === 'dashboard' && <DashboardPage />}
-                    {currentPage === 'products' && <ProductsPage />}
-                    {currentPage === 'sales' && <SalesPage />}
-                    {currentPage === 'customers' && <CustomersPage />}
-                    {currentPage === 'payments' && <PaymentsPage />}
-                    {currentPage === 'billing' && <BillingPage />}
-                    {currentPage === 'reports' && <ReportsPage />}
-                    {currentPage === 'profile' && <UserProfilePage />}
-                    {currentPage === 'analytics' && <AnalyticsPage />}
+                    {currentPage === 'dashboard' && <DashboardPage setCurrentPage={setCurrentPage} />}
+                    {currentPage === 'products' && <ProductsPage setCurrentPage={setCurrentPage} />}
+                    {currentPage === 'sales' && <SalesPage setCurrentPage={setCurrentPage} />}
+                    {currentPage === 'customers' && <CustomersPage setCurrentPage={setCurrentPage} />}
+                    {currentPage === 'payments' && <PaymentsPage setCurrentPage={setCurrentPage} />}
+                    {currentPage === 'billing' && <BillingPage setCurrentPage={setCurrentPage} />}
+                    {currentPage === 'reports' && <ReportsPage setCurrentPage={setCurrentPage} />}
+                    {currentPage === 'profile' && <UserProfilePage setCurrentPage={setCurrentPage} />}
+                    {currentPage === 'analytics' && <AnalyticsPage setCurrentPage={setCurrentPage} />}
                 </main>
             </div>
         </div>
