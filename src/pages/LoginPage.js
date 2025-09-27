@@ -274,16 +274,28 @@ const LoginPage = ({ onLogin }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-            if (!response.ok) throw new Error('Login failed');
-            const token = await response.text();
-            if (token) {
-                // localStorage.setItem('jwt_token', token);
+
+            if (!response.ok) {
+                throw new Error('Login failed');
+            }
+
+            const textResponse = await response.text();
+
+            if (textResponse === "Please login using google login") {
+                // treat this as an error even though status is 200
+                setError(textResponse);
+                return;
+            }
+
+            if (textResponse) {
+                // localStorage.setItem('jwt_token', textResponse);
                 onLogin(true);
                 navigate('/');
             }
         } catch (err) {
             setError(err.message || 'An error occurred during login');
         }
+
     };
 
     // Helpers to open/close specific modals (ensures messages reset properly)
@@ -544,6 +556,34 @@ const LoginPage = ({ onLogin }) => {
                         </div>
                         <div style={{ padding: '20px', textAlign: 'left', overflowY: 'auto', flexGrow: 1, lineHeight: '1.6' }}>
                             {policyContent.content}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {modal === 'forgot' && (
+                <div className="modal-overlay" onClick={closeForgotModal}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Forgot Password</h2>
+                            <button className="close-btn" onClick={closeForgotModal}>&times;</button>
+                        </div>
+                        <div className="form-group">
+                            <label>Enter Email or User ID</label>
+                            <input
+                                type="text"
+                                value={forgotInput}
+                                onChange={(e) => setForgotInput(e.target.value)}
+                                placeholder="Email or UserId"
+                            />
+                        </div>
+                        {forgotMessage && (
+                            <p className="error-message" style={{ color: forgotMessage.startsWith("✅") ? "green" : "red" }}>
+                                {forgotMessage}
+                            </p>
+                        )}
+                        <div className="form-actions">
+                            <button className="btn" onClick={handleForgotPassword}>Send OTP</button>
                         </div>
                     </div>
                 </div>

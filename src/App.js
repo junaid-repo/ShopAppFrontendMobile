@@ -1,11 +1,23 @@
-// src/App.js
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import MainLayout from './components/MainLayout';
+import DashboardPage from './pages/DashboardPage';
+import ProductsPage from './pages/ProductsPage';
+import SalesPage from './pages/SalesPage';
+import CustomersPage from './pages/CustomersPage';
+import PaymentsPage from './pages/PaymentsPage';
+import BillingPage from './pages/BillingPage';
+import ReportsPage from './pages/ReportsPage';
+import UserProfilePage from './pages/UserProfilePage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import HelpPage from './pages/HelpPage';
+import Notification from './pages/Notification';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useConfig } from "./pages/ConfigProvider";// ✅ added
-
+import { useConfig } from "./pages/ConfigProvider";
+import {useSearchKey} from "./context/SearchKeyContext";
 const queryClient = new QueryClient();
 
 function App() {
@@ -20,52 +32,40 @@ function App() {
         apiUrl = config.API_URL;
     }
 
-    // 🔹 Initialize theme from localStorage or default to 'light'
     const [theme, setTheme] = useState(() => {
         const savedTheme = localStorage.getItem('theme');
         return savedTheme || 'light';
     });
 
-    // 🔹 Effect to apply theme + update <meta name="theme-color">
     useEffect(() => {
+        // update body class
         document.body.classList.remove('dark-theme');
         if (theme === 'dark') {
             document.body.classList.add('dark-theme');
         }
         localStorage.setItem('theme', theme);
 
-        // Update browser UI (Chrome mobile, Android status bar, etc.)
+        // 🔹 update theme-color meta tag
         const metaThemeColor = document.querySelector('meta[name="theme-color"]');
         if (metaThemeColor) {
-            metaThemeColor.setAttribute(
-                'content',
-                theme === 'dark' ? '#04041b' : '#f0f8ffd9' // hardcoded for now
-            );
+            if (theme === 'dark') {
+                metaThemeColor.setAttribute('content', '#04041b'); // hardcoded dark color
+            } else {
+                metaThemeColor.setAttribute('content', '#f0f8ffd9'); // hardcoded light color
+            }
         }
-
-        // iOS Safari status bar (limited options: default, black, black-translucent)
-        let appleStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-        if (!appleStatusBar) {
-            appleStatusBar = document.createElement('meta');
-            appleStatusBar.name = "apple-mobile-web-app-status-bar-style";
-            document.head.appendChild(appleStatusBar);
-        }
-        appleStatusBar.setAttribute(
-            "content",
-            theme === 'dark' ? "black" : "default"
-        );
     }, [theme]);
 
-    // 🔹 Function to toggle the theme
     const toggleTheme = () => {
         setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
     };
 
+    // 🔹 New: Check session from backend instead of decoding local token
     const checkSession = async () => {
         try {
             const response = await fetch(`${apiUrl}/api/shop/user/profile`,  {
                 method: 'GET',
-                credentials: 'include',
+                credentials: 'include', // include the cookie
             });
 
             if (response.ok) {
@@ -82,34 +82,20 @@ function App() {
         }
     };
 
-    const checkToken = () => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            setIsAuthenticated(false);
-            return;
-        }
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const expiry = payload.exp * 1000;
-            if (Date.now() >= expiry) {
-                alert("Session expired. You have been logged out.");
-                handleLogout();
-            } else {
-                setIsAuthenticated(true);
-            }
-        } catch (e) {
-            console.error("Invalid token:", e);
-            handleLogout();
-        }
-    };
-
     const handleLogin = () => {
         setIsAuthenticated(true);
         resetInactivityTimer();
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('jwt_token');
+    const handleLogout = async () => {
+        try {
+            await fetch(`${apiUrl}/auth/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (e) {
+            console.error('Logout failed', e);
+        }
         setIsAuthenticated(false);
         clearTimers();
     };
@@ -137,6 +123,7 @@ function App() {
         if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
         if (countdownRef.current) clearInterval(countdownRef.current);
     };
+    const { searchKey, setSearchKey } = useSearchKey();
 
     useEffect(() => {
         const resetEvents = ['mousemove', 'keydown', 'click'];
@@ -148,9 +135,33 @@ function App() {
 
     useEffect(() => {
         checkSession();
-        window.addEventListener("storage", checkToken);
-        return () => window.removeEventListener("storage", checkToken);
     }, []);
+
+
+
+    const [currentPage, setCurrentPage] = useState('dashboard');
+
+    useEffect(() => {
+        if (currentPage !== 'customers') {
+            setSearchKey('');
+        }
+    }, [currentPage, setSearchKey]);
+
+    const pages = {
+        dashboard: <DashboardPage setCurrentPage={setCurrentPage} />,
+        products: <ProductsPage setCurrentPage={setCurrentPage} />,
+        sales: <SalesPage setCurrentPage={setCurrentPage} />,
+        customers: <CustomersPage setCurrentPage={setCurrentPage} />,
+        payments: <PaymentsPage setCurrentPage={setCurrentPage} />,
+        billing: <BillingPage setCurrentPage={setCurrentPage} />,
+        reports: <ReportsPage setCurrentPage={setCurrentPage} />,
+        profile: <UserProfilePage setCurrentPage={setCurrentPage} />,
+        analytics: <AnalyticsPage setCurrentPage={setCurrentPage} />,
+        terms: <TermsPage setCurrentPage={setCurrentPage} />,
+        privacy: <PrivacyPage setCurrentPage={setCurrentPage} />,
+        help: <HelpPage setCurrentPage={setCurrentPage} />,
+        notifications: <Notification  setCurrentPage={setCurrentPage} />,
+    };
 
     return (
         <QueryClientProvider client={queryClient}>
@@ -165,10 +176,17 @@ function App() {
                         }
                     />
                     <Route
-                        path="/"
+                        path="/*"
                         element={
                             isAuthenticated
-                                ? <MainLayout onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+                                ? <MainLayout
+                                    onLogout={handleLogout}
+                                    theme={theme}
+                                    toggleTheme={toggleTheme}
+                                    currentPage={currentPage}
+                                    setCurrentPage={setCurrentPage}
+                                    pages={pages}
+                                />
                                 : <Navigate to="/login" replace />
                         }
                     />

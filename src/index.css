@@ -1221,3 +1221,14 @@ html {
 .action-icon.edit:hover { background-color: #b2ebf2; }
 .action-icon.delete { background-color: #ffebee; color: #d32f2f; }
 .action-icon.delete:hover { background-color: #ffcdd2; }
+
+/* Default (light theme) — keep your current behavior */
+.glass-card.expanded-details {
+    background: white; /* or transparent if that's your current look */
+}
+
+/* Dark theme variant */
+.dark-theme .glass-card.expanded-details {
+    background: var(--glass-bg); /* contrast layer for dark mode */
+    border: 1px solid rgba(255, 255, 255, 0.08); /* subtle border for separation */
+}

@@ -3,20 +3,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import DashboardPage from '../pages/DashboardPage';
-import ProductsPage from '../pages/ProductsPage';
-import SalesPage from '../pages/SalesPage';
-import CustomersPage from '../pages/CustomersPage';
-import PaymentsPage from '../pages/PaymentsPage';
-import BillingPage from '../pages/BillingPage';
-import ReportsPage from '../pages/ReportsPage';
-import UserProfilePage from '../pages/UserProfilePage';
-import AnalyticsPage from '../pages/AnalyticsPage';
+import Footer from "./Footer";
 
-const MainLayout = ({ onLogout, toggleTheme, theme }) => {
+const MainLayout = ({ children, onLogout, toggleTheme, theme, currentPage, setCurrentPage, pages }) => {
     const navigate = useNavigate();
-    const [currentPage, setCurrentPage] = useState('dashboard'); // Track current page
-
     // sidebar collapsed state (persist in localStorage)
     const [isCollapsed, setIsCollapsed] = useState(() => {
         try {
@@ -94,30 +84,15 @@ const MainLayout = ({ onLogout, toggleTheme, theme }) => {
                 onToggleCollapse={toggleCollapse}
                 visible={isSidebarVisible}
                 onClose={() => setIsSidebarVisible(false)}
-                setCurrentPage={setCurrentPage} // Pass navigation function
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}// Pass navigation function
             />
 
             {/* Main content */}
-            <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
-                <Topbar
-                    onLogout={handleLogout}
-                    toggleTheme={toggleTheme}
-                    theme={theme}
-                    isCollapsed={isCollapsed}
-                    setCurrentPage={setCurrentPage} // Pass navigation function
-                />
-                <main style={{ flex: 1, padding: '8px' }}>
-                    {/* Render the selected page directly */}
-                    {currentPage === 'dashboard' && <DashboardPage setCurrentPage={setCurrentPage} />}
-                    {currentPage === 'products' && <ProductsPage setCurrentPage={setCurrentPage} />}
-                    {currentPage === 'sales' && <SalesPage setCurrentPage={setCurrentPage} />}
-                    {currentPage === 'customers' && <CustomersPage setCurrentPage={setCurrentPage} />}
-                    {currentPage === 'payments' && <PaymentsPage setCurrentPage={setCurrentPage} />}
-                    {currentPage === 'billing' && <BillingPage setCurrentPage={setCurrentPage} />}
-                    {currentPage === 'reports' && <ReportsPage setCurrentPage={setCurrentPage} />}
-                    {currentPage === 'profile' && <UserProfilePage setCurrentPage={setCurrentPage} />}
-                    {currentPage === 'analytics' && <AnalyticsPage setCurrentPage={setCurrentPage} />}
-                </main>
+            <div className="main-content">
+                <Topbar onLogout={handleLogout}  toggleTheme={toggleTheme} theme={theme} isCollapsed={isCollapsed} setCurrentPage={setCurrentPage} />
+                <main>{(pages && currentPage && pages[currentPage]) ? pages[currentPage] : children}</main>
+
             </div>
         </div>
     );

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import Modal from '../components/Modal';
 import './CustomersPage.css';
 import { FaEnvelope, FaPhone, FaMoneyBillWave, FaTrash } from 'react-icons/fa';
 import { useConfig } from "./ConfigProvider";
 import { authFetch } from "../utils/authFetch";
+import { useSearchKey } from '../context/SearchKeyContext';
 
 const useDebounce = (value, delay) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -36,10 +37,14 @@ const CustomersPage = () => {
     const [totalCustomers, setTotalCustomers] = useState(0);
     const productsCache = useRef({}); // In-memory cache: { cacheKey: { data, totalPages, totalCount } }
     const ITEMS_PER_PAGE = 12; // Or make this configurable
-
+    const { searchKey, setSearchKey } = useSearchKey();
     // NEW: Debounced search term to reduce API calls
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
-
+    useEffect(() => {
+        return () => {
+            setSearchKey('');
+        };
+    }, [setSearchKey]);
 
 
     if(config){
@@ -90,7 +95,12 @@ const CustomersPage = () => {
         fetchCustomers();
     }, [fetchCustomers]);
 
-
+    // Sync search bar with global search key
+    useEffect(() => {
+        if (searchKey && searchKey !== searchTerm) {
+            setSearchTerm(searchKey);
+        }
+    }, [searchKey]);
     /* const fetchCustomers = () => {
          authFetch(apiUrl + "/api/shop/get/customersList", {
              method: "GET",
