@@ -3,6 +3,7 @@ import { FaDownload } from 'react-icons/fa';
 import axios from 'axios';
 import { useConfig } from "./ConfigProvider";
 import {MdDownload} from "react-icons/md";
+import './SalesPage.css';
 import {
     MdPerson,
     MdEmail,
@@ -270,167 +271,114 @@ const SalesPage = () => {
 
 
             {/* 🟢 Order Details Modal */}
-            {showModal && selectedOrder && (<div
-                style={{
-                    position: "fixed",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: "rgba(0,0,0,0.5)",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    zIndex: 1000,
-                    animation: "fadeIn 0.3s ease"
-                }}
-                onClick={() => setShowModal(false)}
-            >
+            {showModal && selectedOrder && (
                 <div
-                    style={{
-                        background: "var(--glass-bg)",
-                        borderRadius: "20px",
-                        padding: "2rem",
-                        width: "90%",
-                        maxWidth: "700px",
-                        boxShadow: "0 8px 30px var(--shadow-color)",
-                        maxHeight: "90vh",
-                        overflowY: "auto",
-                        color: "var(--text-color)",
-                        border: "1px solid var(--border-color)",
-                        animation: "slideIn 0.3s ease"
-                    }}
-                    onClick={(e) => e.stopPropagation()}
+                    className="order-modal-overlay"
+                    onClick={() => setShowModal(false)}
                 >
-                    {/* Header */}
-                    <div style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        borderBottom: "2px solid var(--border-color)",
-                        marginBottom: "1.5rem",
-                        paddingBottom: "0.5rem",
-                        color: "var(--primary-color)"
-                    }}>
-                        <h2 style={{ margin: 0, fontSize: "1.8rem" }}>
-                            Invoice #{selectedOrder.invoiceId}
-                        </h2>
-                        <button
-                            style={{
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                color: "var(--text-color)"
-                            }}
-                            onClick={() => setShowModal(false)}
-                        >
-                            <MdClose size={28} />
-                        </button>
-                    </div>
+                    <div
+                        className="order-modal-content"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="order-modal-header">
+                            <h2>Invoice #{selectedOrder.invoiceId}</h2>
+                            <button className="close-button" onClick={() => setShowModal(false)}>
+                                <MdClose size={28} />
+                            </button>
+                        </div>
 
-                    {/* Box 1: Customer Details */}
-                    <div style={boxStyle}>
-                        <h3 style={boxHeaderStyle}>
-                            <MdPerson size={24} /> Customer Details
-                        </h3>
-                        <div style={detailItemStyle}>
-                            <MdPerson size={20} color="var(--primary-color)" />
-                            <span>
-                                    <strong>Customer:</strong> {selectedOrder.customerName}
-                                </span>
+                        {/* Box 1: Customer Details */}
+                        <div className="order-box">
+                            <h3><MdPerson size={24} /> Customer Details</h3>
+                            <div className="detail-item">
+                                <MdPerson size={20} color="var(--primary-color)" />
+                                <span><strong>Customer:</strong> {selectedOrder.customerName}</span>
+                            </div>
+                            <div className="detail-item">
+                                <MdEmail size={20} color="var(--primary-color)" />
+                                <span><strong>Email:</strong> {selectedOrder.customerEmail}</span>
+                            </div>
+                            <div className="detail-item">
+                                <MdPhone size={20} color="var(--primary-color)" />
+                                <span><strong>Phone:</strong> {selectedOrder.customerPhone}</span>
+                            </div>
+                            <div className="detail-item">
+                                {selectedOrder.paid ? (
+                                    <MdCheckCircle size={20} color="green" />
+                                ) : (
+                                    <MdCancel size={20} color="red" />
+                                )}
+                                <span>
+            <strong>Status:</strong> {selectedOrder.paid ? "Paid" : "Pending"}
+          </span>
+                            </div>
                         </div>
-                        <div style={detailItemStyle}>
-                            <MdEmail size={20} color="var(--primary-color)" />
-                            <span>
-                                    <strong>Email:</strong> {selectedOrder.customerEmail}
-                                </span>
+
+                        {/* Box 2: Order Items */}
+                        <div className="order-box">
+                            <h3><MdShoppingCart size={24} /> Order Items</h3>
+                            <table className="order-items-table">
+                                <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Cost (each)</th>
+                                    <th>Qty</th>
+                                    <th>Total</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {selectedOrder.items.map((item, idx) => (
+                                    <tr key={idx}>
+                                        <td>{item.productName}</td>
+                                        <td>₹{(item.unitPrice / item.quantity).toLocaleString()}</td>
+                                        <td>{item.quantity.toLocaleString()}</td>
+                                        <td>₹{item.unitPrice.toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
                         </div>
-                        <div style={detailItemStyle}>
-                            <MdPhone size={20} color="var(--primary-color)" />
-                            <span>
-                                    <strong>Phone:</strong> {selectedOrder.customerPhone}
-                                </span>
-                        </div>
-                        <div style={detailItemStyle}>
-                            {selectedOrder.paid ? (
-                                <MdCheckCircle size={20} color="green" />
-                            ) : (
-                                <MdCancel size={20} color="red" />
+
+
+                        {/* Box 3: Totals & GST */}
+                        <div className="order-box">
+                            {selectedOrder.subTotal !== undefined && (
+                                <div className="summary-row">
+                                    <span>Subtotal</span>
+                                    <span>₹{selectedOrder.subTotal.toLocaleString()}</span>
+                                </div>
                             )}
-                            <span>
-                                    <strong>Status:</strong>{' '}
-                                {selectedOrder.paid ? "Paid" : "Pending"}
-                                </span>
-                        </div>
-                    </div>
+                            {selectedOrder.tax !== undefined && (
+                                <div className="summary-row">
+                                    <span>Tax</span>
+                                    <span>₹{selectedOrder.tax.toLocaleString()}</span>
+                                </div>
+                            )}
+                            {selectedOrder.discount !== undefined && (
+                                <div className="summary-row">
+                                    <span>Discount</span>
+                                    <span style={{ color: 'red' }}>
+              -₹{selectedOrder.discount.toLocaleString()}
+            </span>
+                                </div>
+                            )}
 
-                    {/* Box 2: Order Items */}
-                    <div style={boxStyle}>
-                        <h3 style={boxHeaderStyle}>
-                            <MdShoppingCart size={24} /> Order Items
-                        </h3>
-                        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                            {selectedOrder.items.map((item, idx) => (
-                                <li
-                                    key={idx}
-                                    style={{
-                                        padding: "0.8rem 0.2rem",
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        fontSize: "1.1rem",
-                                        fontWeight: 500,
-                                        borderBottom: idx < selectedOrder.items.length - 1 ? '1px solid #eee' : 'none',
-                                    }}
-                                >
-                                    <span>{item.productName} (x{item.quantity})</span>
-                                    <span>₹{item.unitPrice.toLocaleString()}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Box 3: Totals & GST */}
-                    <div style={boxStyle}>
-                        {selectedOrder.subTotal !== undefined && (
-                            <div style={summaryRowStyle}>
-                                <span>Subtotal</span>
-                                <span>₹{selectedOrder.subTotal.toLocaleString()}</span>
+                            <div className="summary-divider" />
+                            {selectedOrder.gstRate !== undefined && (
+                                <div className="summary-row" style={{ fontWeight: 'bold' }}>
+                                    <span className="gstTotal">GST</span>
+                                    <span className="gstTotal">₹{selectedOrder.gstRate.toLocaleString()}</span>
+                                </div>
+                            )}
+                            <div className="total-amount">
+                                <span>Total</span>
+                                <span>₹{selectedOrder.totalAmount.toLocaleString()}</span>
                             </div>
-                        )}
-                        {selectedOrder.tax !== undefined && (
-                            <div style={summaryRowStyle}>
-                                <span>Tax</span>
-                                <span>₹{selectedOrder.tax.toLocaleString()}</span>
-                            </div>
-                        )}
-                        {selectedOrder.discount !== undefined && (
-                            <div style={summaryRowStyle}>
-                                <span>Discount</span>
-                                <span style={{color: 'red'}}>-₹{selectedOrder.discount.toLocaleString()}</span>
-                            </div>
-                        )}
-                        {selectedOrder.gstRate !== undefined && (
-                            <div style={{...summaryRowStyle, fontWeight: 'bold' }}>
-                                <span>GST</span>
-                                <span>₹{selectedOrder.gstRate.toLocaleString()}</span>
-                            </div>
-                        )}
-                        <div style={{ borderTop: '2px solid var(--border-color)', margin: '0.75rem 0' }} />
-                        <div
-                            style={{
-                                ...summaryRowStyle,
-                                fontSize: "1.6rem",
-                                fontWeight: "bold",
-                                color: "var(--primary-color)",
-                            }}
-                        >
-                            <span>Total</span>
-                            <span>₹{selectedOrder.totalAmount.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
-            </div>)}
+            )}
 
 
 

@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import LoginPage from './pages/LoginPage';
 import MainLayout from './components/MainLayout';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useConfig } from "./pages/ConfigProvider";
+import { useConfig } from "./pages/ConfigProvider";// ✅ added
 
 const queryClient = new QueryClient();
 
@@ -39,7 +39,7 @@ function App() {
         if (metaThemeColor) {
             metaThemeColor.setAttribute(
                 'content',
-                theme === 'dark' ? '#0d1117' : '#f0f8ff' // hardcoded for now
+                theme === 'dark' ? '#04041b' : '#f0f8ffd9' // hardcoded for now
             );
         }
 

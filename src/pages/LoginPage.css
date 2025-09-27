@@ -5,16 +5,17 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, rgba(77, 63, 63, 0.71), #2282e2);
     padding: 1rem;
     font-family: 'Inter', sans-serif;
 }
 
 .login-box {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(25, 88, 143, 0.58);
     backdrop-filter: blur(12px);
     border-radius: 16px;
-    padding: 2rem;
+    padding-right: 60px;
+    padding-left: 60px;
     width: 100%;
     max-width: 420px;
     text-align: center;
