@@ -1,9 +1,8 @@
-// src/components/MainLayout.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import Footer from "./Footer";
+// import Footer from "./Footer"; // Removed Footer import
 
 const MainLayout = ({ children, onLogout, toggleTheme, theme, currentPage, setCurrentPage, pages }) => {
     const navigate = useNavigate();
@@ -54,28 +53,9 @@ const MainLayout = ({ children, onLogout, toggleTheme, theme, currentPage, setCu
         <div className={`app-container ${isCollapsed ? 'collapsed' : ''} ${isSidebarVisible ? 'sidebar-open' : ''}`}
              style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
-            {/* Floating hamburger to open/close sidebar (always visible) */}
-            <button
-                className="mobile-hamburger"
-                onClick={toggleSidebarVisibility}
-                aria-label={isSidebarVisible ? 'Close sidebar' : 'Open sidebar'}
-                style={{
-                    position: 'fixed',
-                    top: 10,
-                    left: 10,
-                    zIndex: 1300,
-                    marginTop: '1rem',
-                    fontSize: '1.5rem',
-                    background: 'transparent',
-                    color: 'var(--text-color)',
-                    border: 'none',
-                    borderRadius: 8,
-                    padding: '8px 10px',
-                    cursor: 'pointer'
-                }}
-            >
-                ☰
-            </button>
+            {/* --- REMOVED Floating hamburger to open/close sidebar --- */}
+            {/* This button was removed because the Topbar now handles this */}
+
 
             {/* Sidebar (hidden by default, slides in when visible) */}
             <Sidebar
@@ -89,9 +69,21 @@ const MainLayout = ({ children, onLogout, toggleTheme, theme, currentPage, setCu
             />
 
             {/* Main content */}
-            <div className="main-content">
-                <Topbar onLogout={handleLogout}  toggleTheme={toggleTheme} theme={theme} isCollapsed={isCollapsed} setCurrentPage={setCurrentPage} />
-                <main>{(pages && currentPage && pages[currentPage]) ? pages[currentPage] : children}</main>
+            {/* Added styles to make main-content and main grow to fill space */}
+            <div className="main-content" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <Topbar
+                    onLogout={handleLogout}
+                    toggleTheme={toggleTheme}
+                    theme={theme}
+                    isCollapsed={isCollapsed}
+                    setCurrentPage={setCurrentPage}
+                    toggleSidebar={toggleSidebarVisibility} /* --- ADDED THIS PROP --- */
+                />
+                <main style={{ flex: 1 }}>
+                    {(pages && currentPage && pages[currentPage]) ? pages[currentPage] : children}
+                </main>
+
+                {/* --- Footer component removed --- */}
 
             </div>
         </div>
@@ -99,3 +91,4 @@ const MainLayout = ({ children, onLogout, toggleTheme, theme, currentPage, setCu
 };
 
 export default MainLayout;
+

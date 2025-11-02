@@ -1,8 +1,11 @@
-/* Mobile Topbar Container */
+/* src/components/Topbar.css */
+
+/* --- Main Topbar --- */
 .topbar {
     display: flex;
-    flex-direction: column; /* stack elements vertically */
-    gap: 10px;
+    flex-direction: row; /* FIX: Was 'column', now 'row' */
+    justify-content: space-between; /* Pushes left and right apart */
+    align-items: center;
     padding: 0.5rem 0.75rem;
     background: var(--glass-bg);
     backdrop-filter: blur(10px);
@@ -10,73 +13,250 @@
     box-shadow: 0 2px 8px var(--shadow-color);
     width: 100%;
     box-sizing: border-box;
+    height: 60px; /* Give it a fixed height */
+    position: sticky;
+    top: 0;
+    z-index: 900;
 }
 
-/* Search bar */
-.topbar .search-bar {
-    width: 100%;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-    box-sizing: border-box;
-}
-
-/* User area */
-.topbar-user {
+/* --- Topbar Left (Hamburger + Logo) --- */
+.topbar-left {
     display: flex;
     align-items: center;
-    padding: 0.25rem 0.5rem; /* smaller padding for mobile */
+    gap: 8px;
+}
+
+.sidebar-toggle-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hamburger-icon-wrapper {
+    width: 22px;
+    height: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.hamburger-line {
+    display: block;
+    height: 2px;
+    background: var(--text-color); /* Use theme color */
+    border-radius: 2px;
+    opacity: 0.85;
+}
+
+.logo {
+    font-size: 1.25rem; /* Smaller for mobile */
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0;
+    cursor: pointer;
+    font-family: "lemon_milk_pro_regular_webfont", BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* --- Topbar Right (Icons) --- */
+.topbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.topbar-buttons-container {
+    display: flex;
+    align-items: center;
+    gap: 4px; /* Tighter gap for mobile icons */
+    padding: 4px;
     border-radius: 50px;
-
-
-
-    transition: all 0.3s ease;
-    gap: 8px; /* smaller gap */
+    background: var(--glass-bg-darker);
+    box-shadow: 0 1px 4px var(--shadow-color-light);
 }
 
-.topbar-user:hover {
-    background-color: var(--primary-color-light);
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(0, 170, 255, 0.3);
-}
-
-/* Profile Picture */
-.profile-pic {
-    width: 40px; /* slightly smaller for mobile */
-    height: 40px;
+.topbar-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; /* Touch-friendly size */
+    height: 36px;
     border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--primary-color);
-    transition: transform 0.2s ease;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: background-color 0.2s ease;
 }
 
-.topbar-user:hover .profile-pic {
-    transform: scale(1.05);
+.topbar-icon-wrapper:hover {
+    background-color: var(--hover-color);
 }
 
-/* Username text */
-.user-name {
-    font-size: 12px; /* smaller font for mobile */
-    margin-left: 8px;
+/* --- Notification Badge & Dropdown --- */
+.notification-badge {
+    position: absolute;
+    top: 5px;
+    right: 4px;
+    background: var(--primary-color);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 0.0rem;
+    min-width: 12px;
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    z-index: 2;
+
+}
+
+.notification-dropdown {
+    position: absolute;
+    top: 45px; /* Position below icon */
+    right: 0;
+    min-width: 300px;
+    max-width: 90vw;
+    background: var(--modal-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 16px var(--shadow-color);
+    z-index: 1000;
+    padding: 0.5rem 0;
+    overflow: hidden;
+}
+.notification-dropdown-header {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
+}
+.notification-dropdown-empty {
+    padding: 1rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+.notification-dropdown-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color-light);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.notification-dropdown-item:last-child {
+    border-bottom: none;
+}
+.notification-dropdown-item:hover {
+    background-color: var(--hover-color);
+}
+.notification-dropdown-item.unread {
+    background-color: var(--primary-color-faded);
+}
+.notification-title {
     font-weight: 600;
     color: var(--text-color);
-    white-space: nowrap;
 }
-
-/* Logout / Theme buttons */
-.topbar button {
-    padding: 6px 10px; /* smaller padding */
-    font-size: 0.75rem; /* smaller font */
-    border-radius: 20px;
-    min-height: 36px; /* touch-friendly */
-    cursor: pointer;
+.notification-subject {
+    font-size: 0.9rem;
+    opacity: 0.8;
 }
-
-/* Layout: wrap controls on small screens */
-.topbar > div:last-child {
+.notification-time {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    text-align: right;
+}
+.notification-dropdown-actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: space-between;
+    justify-content: flex-end;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--border-color);
+}
+.btn-clear-notif {
+    background: transparent;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+}
+
+
+/* --- User Profile & Dropdown --- */
+.user-profile-wrapper {
+    /* Wrapper styles */
+}
+
+.user-profile-trigger {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 2px 4px; /* Minimal padding */
+}
+
+.user-profile-pic {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary-color-light);
+}
+
+/* Hide username on mobile by default */
+.user-profile-name {
+    display: none;
+    margin-left: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+/* Show username if sidebar is not collapsed (optional) */
+/* You might need to adjust this logic based on how 'isCollapsed' works */
+.topbar:not(.collapsed) .user-profile-name {
+    display: inline;
+}
+
+
+.user-dropdown {
+    position: absolute;
+    top: 45px; /* Position below icon */
+    right: 0;
+    background: var(--modal-bg);
+    box-shadow: 0 4px 12px var(--shadow-color);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 8px 0;
+    z-index: 1000;
+    min-width: 220px;
+    overflow: hidden;
+}
+
+.user-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    transition: background-color 0.2s ease;
+}
+
+.user-dropdown-item:hover {
+    background-color: var(--hover-color);
+}
+
+.user-dropdown-item i {
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.user-dropdown-item.logout {
+    color: #e80a0d;
+}
+.user-dropdown-item.logout i {
+    color: #e80a0d;
 }

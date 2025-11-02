@@ -1,8 +1,6 @@
 /* src/pages/DashboardPage.css */
 
 /* -------------------- STATS GRID -------------------- */
-
-
 .stat-card {
     display: flex;
     align-items: center;
@@ -38,10 +36,34 @@
     flex-shrink: 0;
 }
 
-.icon.revenue { background: #22c55e; }
-.icon.units { background: #413bf6; }
-.icon.tax { background: #bb2c56; }
-.icon.stock { background: #ff0024; }
+
+/* Themed glass tones */
+.icon.revenue {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.35);
+    color: rgb(34, 197, 94);
+    font-size: 35px;
+}
+.icon.units {
+    background: rgba(65, 59, 246, 0.15);
+    border-color: rgba(65, 59, 246, 0.35);
+    color: rgb(65, 59, 246);
+}
+.icon.tax {
+    background: rgba(187, 44, 86, 0.15);
+    border-color: rgba(187, 44, 86, 0.35);
+    color: rgb(187, 44, 86);
+}
+.icon.stock {
+    background: rgba(255, 0, 36, 0.15);
+    border-color: rgba(255, 0, 36, 0.35);
+    color: rgb(255, 0, 36);
+}
+.icon.sales {
+    background: rgba(253, 12, 205, 0.15);
+    border-color: rgba(253, 12, 205, 0.33);
+    color: rgb(253, 12, 205);
+}
 
 .stat-card p {
     font-size: 0.9rem;
@@ -54,7 +76,6 @@
     margin: 0.2rem 0 0;
 }
 
-/* -------------------- SHORTCUTS -------------------- */
 /* -------------------- SHORTCUTS -------------------- */
 .shortcuts-container {
     display: flex;
@@ -96,7 +117,109 @@
     }
 }
 
+/* -------------------- NEW STYLES MERGED FROM DESKTOP -------------------- */
 
+/* Containers for new sections */
+.quick-shortcuts, .recent-sales, .weekly-sales-graph, .top-products {
+    margin-top: 1.5rem; /* Increased margin for mobile */
+    cursor: pointer;
+}
+
+/* Chart Container */
+.chart-container {
+    height: 250px;
+    position: relative;
+    padding: 0.5rem;
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on mobile */
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    background: linear-gradient(to right, #f9f9fb, #ffffff);
+    border-radius: 12px 12px 0 0;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,0.06);
+}
+
+/* Card Header Title */
+.card-header h3 {
+    margin: 0;
+    font-size: 1.2rem; /* Adjusted for mobile */
+    font-weight: 700;
+    color: #222;
+    letter-spacing: 0.5px;
+    flex-basis: 100%; /* Make title take full width if it wraps */
+    margin-bottom: 0.5rem; /* Add space if wraps */
+}
+
+.dark-theme .card-header {
+    display: flex;
+    justify-content: space-between; /* pushes buttons left & title right */
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1); /* subtle light border */
+    background: linear-gradient(to right, #1e1e2e, #2a2a3d); /* dark gradient */
+    border-radius: 12px 12px 0 0;
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06); /* soft inner glow */
+    color: #e5e5e5; /* light text for readability */
+}
+
+/* Toggle button container */
+.toggle-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%; /* Make toggles take full width on mobile */
+}
+
+/* Base toggle button */
+.toggle-btn {
+    flex: 1; /* Make buttons share width equally */
+    padding: 0.5rem 1rem;
+
+    border: 0px solid #ddd;
+    background: #fff;
+    color: #444;
+    font-weight: 600;
+    font-size: 0.8rem; /* Adjusted for mobile */
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+/* Active state */
+.toggle-btn.active {
+    border-bottom: 2px solid #00aaff;
+    background: #e6f9ff;
+    color: #0077b6;
+    padding-bottom: 5px;
+
+}
+
+/* Top Products Table */
+.data-table.gradient-table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 12px;
+    font-family: Arial, sans-serif;
+    font-size: 0.8rem; /* Smaller font for mobile tables */
+}
+
+/* Gradient rows (denser color at top, fading down) */
+.data-table.gradient-table tbody tr:nth-child(1) {
+    background: rgba(126, 209, 255, 0.18); /* dense */
+}
+.data-table.gradient-table tbody tr:nth-child(2) {
+    background: rgba(126, 209, 255, 0.06);
+}
+.data-table.gradient-table tbody tr:nth-child(3) {
+    background: rgba(126, 209, 255, 0);
+}
+
+/* -------------------- EXISTING MOBILE STYLES -------------------- */
 
 /* -------------------- MODALS & FORMS -------------------- */
 .input-error {
@@ -153,10 +276,11 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 1rem;
+    font-size: 0.8rem; /* Smaller font for mobile tables */
 }
 
 .data-table th, .data-table td {
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 0.5rem; /* Reduced padding for mobile */
     text-align: left;
     border-bottom: 1px solid rgba(0,0,0,0.1);
 }
@@ -176,3 +300,9 @@
 }
 
 /* -------------------- RESPONSIVE -------------------- */
+/* Add media query for Top Products table to scroll horizontally if needed */
+@media (max-width: 600px) {
+    .table-container {
+        overflow-x: auto; /* Allows horizontal scroll on small screens */
+    }
+}

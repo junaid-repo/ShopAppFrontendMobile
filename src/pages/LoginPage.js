@@ -450,7 +450,7 @@ const LoginPage = ({ onLogin }) => {
                         <input
                             type="text"
                             placeholder="Username"
-                            style={{borderRadius: "30px"}}
+                            style={{borderRadius: "30px", width: "150%"}}
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required
@@ -462,7 +462,7 @@ const LoginPage = ({ onLogin }) => {
                         <input
                             type="password"
                             placeholder="Password"
-                            style={{borderRadius: "30px"}}
+                            style={{borderRadius: "30px", width: "80%"}}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required

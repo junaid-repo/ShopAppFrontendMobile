@@ -1,51 +1,40 @@
-/* Sidebar Container */
+/* src/components/Sidebar.css */
+
+/* --- Font Awesome Loading --- */
+/* Make sure Font Awesome is loaded in public/index.html */
+
+/* Basic Sidebar Structure & Off-Canvas */
 .sidebar {
-    width: 150px;          /* narrower for mobile */
-    background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    border-right: 1px solid var(--border-color);
-    box-shadow: 2px 0 8px var(--shadow-color);
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    position: fixed;       /* fixed on screen */
+    position: fixed;
     top: 0;
     left: 0;
-    overflow-y: auto;
-    z-index: 1100; /* above main content but below hamburger (1100 used by hamburger too) */
-    transition: transform 0.25s ease, opacity 0.25s ease;
-    transform: translateX(-100%); /* hidden by default (off-canvas) */
-    opacity: 0;
-    padding-top: 100px;
+    bottom: 0; /* Cover full height */
+    width: 200px; /* Adjust width */
+    background: var(--glass-bg, white);
+    border-right: 1px solid var(--border-color, #eee);
+    box-shadow: 2px 0 8px var(--shadow-color);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1200; /* Above overlay */
+    display: flex; /* CRITICAL: Use flexbox */
+    flex-direction: column; /* Stack nav and footer vertically */
+    /* Remove fixed height: 100vh; use top/bottom: 0 instead */
+    padding-top: 60px; /* Space for Topbar */
+    /* padding-bottom removed - footer handles its own padding */
 }
 
-/* When visible (controlled via JS class) */
 .sidebar.visible {
     transform: translateX(0);
-    opacity: 1;
-    z-index: 1200;
 }
 
-/* Hidden explicit state (same as default) */
-.sidebar.hidden {
-    transform: translateX(-100%);
-    opacity: 0;
-}
-
-/* Collapsed sidebar keeps behavior but still off-canvas until visible */
-.sidebar.collapsed {
-    width: 60px;           /* icon-only view */
-}
-
-/* Overlay shown when sidebar is open */
 .sidebar-overlay {
     position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.35);
-    z-index: 1050;
+    inset: 0; /* Shortcut for top/left/right/bottom: 0 */
+    background-color: rgba(0, 0, 0, 0.4);
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    z-index: 1150; /* Below sidebar */
 }
 
 .sidebar-overlay.visible {
@@ -53,63 +42,42 @@
     visibility: visible;
 }
 
-/* Sidebar header */
-.sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-
-    gap: 8px;
-    padding: 0.5rem 0.75rem;  /* smaller padding for mobile */
-}
-
-/* Logo text */
-.logo {
-    font-size: 1rem;
-    font-weight: bold;
-    white-space: nowrap;
-}
-
-/* Sidebar toggle button */
-.sidebar-toggle-btn {
-    background: transparent;
-
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Sidebar nav */
+/* Sidebar nav - Allow scrolling */
 .sidebar-nav {
-    margin-top: 45px;
+    flex-grow: 1; /* CRITICAL: Takes available space */
+    overflow-y: auto; /* Allow scrolling ONLY for nav items */
+    padding: 0.5rem; /* Padding around nav items */
     display: flex;
     flex-direction: column;
-    padding: 0.5rem 0;
-    gap: 20px;
-    font-size: 2.5rem;
+    gap: 2.5rem; /* Space between links */
 }
 
-/* Nav links */
-.nav-link {
+/* Nav links / Buttons */
+.sidebar-link {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;       /* smaller padding for mobile */
-    border-radius: 12px;
-    font-size: 1.15rem;      /* smaller font for mobile */
+    gap: 15px;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
     color: var(--text-color);
     text-decoration: none;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
 }
 
-/* Active nav link */
-.nav-link.active {
-    background-color: var(--primary-color-light);
-    color: var(--primary-color);
-    transform: translateX(2px);
+/* Icons within links */
+.sidebar-link i {
+    font-size: 1.3rem;
+    width: 25px;
+    text-align: center;
+    color: var(--text-color);
+    flex-shrink: 0;
+    line-height: 1;
 }
 
 /* Nav text */
@@ -117,56 +85,58 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-weight: 500;
 }
 
-/* Icons */
-.nav-link svg {
-    font-size: 1.3rem;       /* slightly smaller icons for mobile */
-}
-
-/* Collapsed: hide text */
-.sidebar.collapsed .nav-text {
-    display: none;
-}
-
-/* Scrollbar adjustments for mobile */
-.sidebar::-webkit-scrollbar {
-    width: 6px;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.sidebar-link {
-    color: var(--text-color) !important;
-    font-size: 1rem;
-    font-family: inherit;
-    background: none;
-    border: none;
-    padding: 10px;
-    width: 100%;
-    text-align: left;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-}
-
+/* Hover effect */
 .sidebar-link:hover {
-    background: var(--primary-color-light, #e0f7ff);
+    background-color: var(--table-hover-bg);
+}
+
+/* Active nav link */
+.sidebar-link.active {
+    background-color: var(--primary-color-light);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+.sidebar-link.active i {
     color: var(--primary-color);
 }
 
-.sidebar-link span {
-    color: var(--text-color) !important;
+/* --- Sidebar Footer --- */
+.sidebar-footer {
+    padding: 0.5rem; /* Padding inside the footer */
+    /* margin-top: auto; IS NOT NEEDED if nav has flex-grow: 1 */
+    border-top: 1px solid var(--border-color); /* Separator line */
+    flex-shrink: 0; /* Prevent footer from shrinking */
+    background: var(--glass-bg); /* Match sidebar background */
 }
 
-.sidebar-link svg {
-    color: inherit !important;
+/* Style the chat support link like other links */
+.sidebar-footer .chat-support {
+    /* Inherits .sidebar-link styles */
+    /* Add specific styles if needed, e.g., slightly different color */
+}
+.sidebar-footer .chat-support i {
+    color: var(--primary-color); /* Ensure icon color */
+}
+
+/* Dark theme icon adjustments */
+body.dark-theme .sidebar-link i {
+    color: var(--primary-color);
+}
+body.dark-theme .sidebar-link.active i {
+    color: var(--primary-color);
+}
+
+/* Scrollbar adjustments */
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
 }

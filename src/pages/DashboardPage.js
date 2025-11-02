@@ -1,11 +1,39 @@
 // src/pages/DashboardPage.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Added useRef
 import { FaRupeeSign, FaBoxes, FaBan, FaChartLine } from 'react-icons/fa';
 import CurrencyRupeeTwoToneIcon from '@mui/icons-material/CurrencyRupeeTwoTone';
 import Modal from '../components/Modal';
 import './DashboardPage.css';
 import { useNavigate } from 'react-router-dom';
 import { useConfig } from "./ConfigProvider";
+import { Line } from 'react-chartjs-2'; // 1. Added Graph Import
+import { // 1. Added ChartJS Imports
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler,
+    ArcElement
+} from 'chart.js';
+
+// 1. Register ChartJS components
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    Filler,
+    ArcElement
+);
 
 const DashboardPage = ({ setCurrentPage }) => {
     const [dashboardData, setDashboardData] = useState({});
@@ -20,6 +48,16 @@ const DashboardPage = ({ setCurrentPage }) => {
     const [stock, setStock] = useState("");
     const [tax, setTax] = useState("");
     const [isAddProdModalOpen, setIsAddProdModalOpen] = useState(false);
+
+    // --- 1. Added State for Sales Graph ---
+    const [weeklySalesData, setWeeklySalesData] = useState([]); // State for graph data
+    const lineChartRef = useRef(null);
+
+    // --- 2. Added State for Top Products ---
+    const [productFactor, setProductFactor] = useState('mostSelling'); // 'mostSelling' or 'topGrossing'
+    const [topProducts, setTopProducts] = useState([]);
+    const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+
 
     const config = useConfig();
     const navigate = useNavigate();
@@ -87,6 +125,79 @@ const DashboardPage = ({ setCurrentPage }) => {
             });
     }, [apiUrl, token]);
 
+    // --- 1. Added Helper function to format large numbers ---
+    const formatLargeNumber = (value) => {
+        if (value >= 10000000) { // 10 million or more
+            return `${(value / 10000000).toFixed(1)}Cr`;
+        } else if (value >= 100000) { // 1 lakh or more
+            return `${(value / 100000).toFixed(1)}L`;
+        } else if (value >= 1000) {
+            return `${(value / 1000).toFixed(1)}K`;
+        }
+        return value?.toString?.() ?? '';
+    };
+
+    // --- 1. Added Function to fetch weekly sales ---
+    const fetchWeeklySales = async () => {
+        try {
+            if (!apiUrl) throw new Error('No API URL');
+            const response = await fetch(`${apiUrl}/api/shop/get/analytics/weekly-sales/${timeRange}`, {
+                method: "GET",
+                credentials: 'include',
+                headers: { "Content-Type": "application/json" },
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            console.log("Weekly Sales Data:", data);
+            setWeeklySalesData(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.warn("Error fetching weekly sales data:", error);
+            setWeeklySalesData([]); // Fallback to empty on error
+        }
+    };
+
+    // --- 2. Added Function to fetch top products ---
+    const fetchTopProducts = async () => {
+        setIsLoadingProducts(true);
+        const params = new URLSearchParams({
+            count: 3,
+            timeRange: timeRange,
+            factor: productFactor,
+        });
+
+        try {
+            if (!apiUrl) throw new Error('No API URL');
+            const response = await fetch(`${apiUrl}/api/shop/get/top/products?${params.toString()}`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!response.ok) throw new Error('Failed to fetch top products');
+            const data = await response.json();
+            setTopProducts(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Error fetching top products:", error);
+            setTopProducts([]); // safe fallback
+        } finally {
+            setIsLoadingProducts(false);
+        }
+    };
+
+    // --- 1. Added useEffect for fetching weekly sales ---
+    useEffect(() => {
+        if (apiUrl) {
+            fetchWeeklySales();
+        }
+    }, [timeRange, apiUrl]);
+
+    // --- 2. Added useEffect for fetching top products ---
+    useEffect(() => {
+        if (apiUrl) {
+            fetchTopProducts();
+        }
+    }, [timeRange, productFactor, apiUrl]);
+
+
     const recentSales = sales.slice(0, 3);
 
     // 📌 Add Customer
@@ -144,13 +255,86 @@ const DashboardPage = ({ setCurrentPage }) => {
         }
     };
 
+    // --- 1. Added Chart.js Configuration ---
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: { color: '#333' } // Simplified for mobile
+            },
+        },
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: { display: true, text: 'Revenue (₹)', color: '#8884d8' },
+                ticks: {
+                    color: '#9ca3af',
+                    callback: function(value) {
+                        return '₹' + formatLargeNumber(value);
+                    }
+                },
+                grid: { color: 'rgba(156, 163, 175, 0.1)' }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: { display: true, text: 'Units Sold', color: '#82ca9d' },
+                ticks: { color: '#9ca3af' },
+                grid: { drawOnChartArea: false },
+            },
+            x: {
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(156, 163, 175, 0.1)' }
+            }
+        },
+    };
+
+    const chartData = {
+        labels: (weeklySalesData || []).map(d => d.day),
+        datasets: [
+            {
+                fill: true,
+                label: 'Total Sales',
+                data: (weeklySalesData || []).map(d => d.totalSales),
+                borderColor: '#00b0ff',
+                backgroundColor: 'rgba(0, 176, 255, 0.1)', // Simplified
+                yAxisID: 'y',
+                tension: 0.4,
+                pointBackgroundColor: '#00b0ff',
+                pointRadius: 2,
+            },
+            {
+                fill: true,
+                label: 'Units Sold',
+                data: (weeklySalesData || []).map(d => d.unitsSold),
+                borderColor: '#00bfa5',
+                backgroundColor: 'rgba(0, 191, 165, 0.1)', // Simplified
+                yAxisID: 'y1',
+                tension: 0.4,
+                pointBackgroundColor: '#00bfa5',
+                pointRadius: 2,
+            },
+        ],
+    };
+    // --- End of Chart.js Configuration ---
+
+
     return (
         <div className="dashboard" style={{marginTop: "20px"}}>
             <h3>Dashboard</h3>
 
             {/* Time Range Selector */}
-            <div className="time-range-selector glass-card">
-                <label htmlFor="timeRange">📅 </label>
+            <div className="time-range-selector glass-card" style={{ boxShadow: "inset 0 -1px 0 rgba(0,0,0,0.06)", borderRadius: "20px", border: "1px solid var(--primary-color-light)"} }>
+                <label htmlFor="timeRange"><i class="fa-duotone fa-solid fa-calendar-range" style={{fontSize:'15px', marginRight:'0px'}}></i> </label>
                 <select
                     id="timeRange"
                     value={timeRange}
@@ -196,16 +380,39 @@ const DashboardPage = ({ setCurrentPage }) => {
                 </div>
             </div>
 
-            {/* Shortcuts */}
+            {/* --- 3. Updated Shortcuts --- */}
             <div className="quick-shortcuts glass-card" >
                 <h3 style ={{ marginTop: '30px', flexDirection: 'column', gap: '1rem' }}>Quick Shortcuts</h3>
                 <div className="shortcuts-container">
-                    <button className="btn" onClick={() => goTo('billing')}>New Billing</button>
-                    <button className="btn" onClick={() => setIsAddProdModalOpen(true)}>Add Product</button>
-                    <button className="btn" onClick={() => setIsNewCusModalOpen(true)}>New Customer</button>
-                    <button className="btn" onClick={() => goTo('reports')}>Generate Report</button>
-                    <button className="btn" onClick={() => goTo('analytics')}>Analytics</button>
-                    <button className="btn" onClick={() => goTo('payments')}>Payments</button>
+                    <button className="btn" onClick={() => goTo('billing')}><i
+                        className="fa-duotone fa-solid fa-cart-plus" style={{paddingRight: '7px'}}></i>New Sale
+                    </button>
+                    <button className="btn" onClick={() => goTo('reports')}><i
+                        className="fa-duotone fa-solid fa-file-spreadsheet" style={{paddingRight: '7px'}}></i>Reports
+                    </button>
+                    <button className="btn" onClick={() => goTo('profile')}><i className="fa-duotone fa-solid fa-user"
+                                                                               style={{paddingRight: '7px'}}></i>
+                        Profile
+                    </button>
+                    <button className="btn" onClick={() => goTo('notifications')}><i
+                        className="fa-duotone fa-solid fa-bell" style={{paddingRight: '7px'}}></i>Alerts
+                    </button>
+                    <button className="btn" onClick={() => goTo('customers')}><i
+                        className="fa-duotone fa-regular fa-users" style={{paddingRight: '7px'}}></i>Alerts
+                    </button>
+                    <button className="btn" onClick={() => goTo('analytics')}><i
+                        className="fa-duotone fa-solid fa-chart-mixed" style={{paddingRight: '7px'}}></i>Alerts
+                    </button>
+
+                </div>
+            </div>
+
+            {/* --- 1. Added Sales Performance Graph --- */}
+            <div className="weekly-sales-graph glass-card">
+                <h3 className="card-header" onClick={() => goTo('analytics')}>Sales Performance</h3>
+                {/* You may need to add a .chart-container style to your CSS */}
+                <div className="chart-container" style={{ height: "250px", position: "relative" }}>
+                    <Line ref={lineChartRef} options={chartOptions} data={chartData} />
                 </div>
             </div>
 
@@ -238,17 +445,79 @@ const DashboardPage = ({ setCurrentPage }) => {
                             </td>
                             <td style={{ padding: "4px 8px" }}>₹{sale.total.toLocaleString()}</td>
                             <td style={{ padding: "4px 8px" }}>
-        <span className={sale.status === "Paid" ? "status-paid" : "status-pending"}>
-          {sale.status}
-        </span>
+                                <span className={sale.status === "Paid" ? "status-paid" : "status-pending"}>
+                                  {sale.status}
+                                </span>
                             </td>
                         </tr>
                     ))}
                     </tbody>
-
-
                 </table>
             </div>
+
+            {/* --- 2. Added Top Products --- */}
+            <div className="top-products glass-card">
+                <div
+                    className="card-header"
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                    }}
+                >
+                    <div className="toggle-buttons">
+                        <button
+                            className={`toggle-btn ${
+                                productFactor === "mostSelling" ? "active" : ""
+                            }`}
+                            onClick={() => setProductFactor("mostSelling")}
+                        >
+                            Most Selling
+                        </button>
+                        <button
+                            className={`toggle-btn ${
+                                productFactor === "topGrossing" ? "active" : ""
+                            }`}
+                            onClick={() => setProductFactor("topGrossing")}
+                        >
+                            Top Grossing
+                        </button>
+                    </div>
+                    <h3>Top Products</h3>
+                </div>
+
+                <div className="table-container">
+                    {isLoadingProducts ? (
+                        <p>Loading...</p>
+                    ) : (
+                        <table className="data-table gradient-table">
+                            <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Stock</th>
+                                <th>Revenue</th>
+                                <th>Units Sold</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {(topProducts || []).map((product) => (
+                                <tr key={product.productName || JSON.stringify(product)} onClick={() => goTo('products')}>
+                                    <td>{product.productName}</td>
+                                    <td>{product.category}</td>
+                                    <td>{product.currentStock}</td>
+                                    <td>
+                                        ₹{(product.amount ?? 0).toLocaleString("en-IN")}
+                                    </td>
+                                    <td>{product.count}</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </div>
+
 
             {/* Add Customer Modal */}
             {isNewCusModalOpen && (

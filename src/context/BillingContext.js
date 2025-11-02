@@ -1,5 +1,5 @@
 // context/BillingContext.js
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useCallback, useMemo } from "react";
 
 const BillingContext = createContext();
 export const useBilling = () => useContext(BillingContext);
@@ -9,63 +9,89 @@ export const BillingProvider = ({ children }) => {
     const [cart, setCart] = useState([]);
     const [paymentMethod, setPaymentMethod] = useState('CASH');
     const [products, setProducts] = useState([]); // store products with stock
+    const [payingAmount, setPayingAmount] = useState(0);
+    const [isPayingAmountManuallySet, setIsPayingAmountManuallySet] = useState(false);
 
-    const loadProducts = (productList) => setProducts(productList);
+    // --- All context functions are now wrapped in useCallback ---
 
-    const addProduct = (product) => {
+    const loadProducts = useCallback((productList) => {
+        setProducts(productList);
+    }, []);
+
+    const addProduct = useCallback((product) => {
         if (product.stock <= 0) return; // no stock, no adding
-        setProducts(prev =>
-            prev.map(p =>
-                p.id === product.id ? { ...p, stock: p.stock - 1 } : p
-            )
-        );
+
+        // Note: Stock is now managed within the product data itself,
+        // so we don't need to manage a separate `products` list state here.
+        // The stock check is sufficient.
+
         setCart(prev => {
             const existing = prev.find(item => item.id === product.id);
-            return existing
-                ? prev.map(item =>
+            if (existing) {
+                // Increment quantity if item exists
+                return prev.map(item =>
                     item.id === product.id
                         ? { ...item, quantity: item.quantity + 1 }
                         : item
-                )
-                : [...prev, { ...product, quantity: 1, details: product.details || '' }];
+                );
+            }
+            // Add new item to cart
+            return [...prev, { ...product, quantity: 1, details: product.details || '' }];
         });
-    };
+    }, []);
 
-    const removeProduct = (productId) => {
-        const removedItem = cart.find(item => item.id === productId);
-        if (removedItem) {
-            // return stock to product list
-            setProducts(prev =>
-                prev.map(p =>
-                    p.id === removedItem.id ? { ...p, stock: p.stock + removedItem.quantity } : p
-                )
-            );
-        }
+    const removeProduct = useCallback((productId) => {
         setCart(prev => prev.filter(item => item.id !== productId));
-    };
+    }, []);
 
-    // new: update cart item fields (quantity, details, sellingPrice, etc.)
-    const updateCartItem = (productId, changes) => {
+    const updateCartItem = useCallback((productId, changes) => {
         setCart(prev => prev.map(item => item.id === productId ? { ...item, ...changes } : item));
-    };
+    }, []);
 
-    const clearBill = () => {
+    const clearBill = useCallback(() => {
         setSelectedCustomer(null);
         setCart([]);
         setPaymentMethod('CASH');
-        // optional: reset product stocks to original by refetching
-    };
+        setPayingAmount(0);
+        setIsPayingAmountManuallySet(false);
+    }, []);
+
+    // --- The context value is wrapped in useMemo for performance ---
+    // This ensures the value object is not recreated on every render
+    const value = useMemo(() => ({
+        selectedCustomer,
+        setSelectedCustomer,
+        cart,
+        addProduct,
+        removeProduct,
+        paymentMethod,
+        setPaymentMethod,
+        clearBill,
+        products,
+        loadProducts,
+        updateCartItem,
+        // --- Add these four new values ---
+        payingAmount,
+        setPayingAmount,
+        isPayingAmountManuallySet,
+        setIsPayingAmountManuallySet
+    }), [
+        selectedCustomer,
+        cart,
+        paymentMethod,
+        products,
+        // --- Add the 4 new values to the dependency array ---
+        payingAmount,
+        isPayingAmountManuallySet,
+        addProduct,
+        removeProduct,
+        clearBill,
+        loadProducts,
+        updateCartItem
+    ]);
 
     return (
-        <BillingContext.Provider
-            value={{
-                selectedCustomer, setSelectedCustomer,
-                cart, addProduct, removeProduct,
-                paymentMethod, setPaymentMethod,
-                clearBill, products, loadProducts,
-                updateCartItem
-            }}
-        >
+        <BillingContext.Provider value={value}>
             {children}
         </BillingContext.Provider>
     );

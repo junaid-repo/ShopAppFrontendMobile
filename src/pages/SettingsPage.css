@@ -1,0 +1,284 @@
+/* src/pages/SettingsPageMobile.css (or integrate into global mobile CSS) */
+
+.settings-page h1 {
+    text-align: center; /* Center title on mobile */
+    margin-bottom: 1rem;
+    font-size: 1.6rem; /* Adjust title size */
+}
+
+.settings-page .info-text {
+    display: block;
+    text-align: center;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+    color: var(--text-muted, #586069); /* Use text-muted from global if available */
+}
+
+/* --- NEW: Main Layout for Mobile Settings --- */
+.settings-layout {
+    display: flex;
+    flex-direction: row; /* Sidebar left, content right */
+    gap: 1rem; /* Space between sidebar and content */
+    margin-top: 1rem;
+}
+
+/* --- NEW: Vertical Sidebar Navigation --- */
+.settings-sidebar-nav {
+    display: flex;
+    flex-direction: column; /* Stack tabs vertically */
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
+    width: 75px; /* Adjust width as needed for icons/short text */
+    gap: 0.5rem;
+    background: var(--glass-bg, rgba(240, 248, 255, 0.9)); /* Sidebar background */
+    padding: 0.5rem;
+    border-radius: 15px;
+    border: 1px solid var(--border-color, rgba(224, 247, 255, 0.8));
+    align-self: flex-start; /* Align sidebar to the top */
+}
+
+/* --- NEW: Vertical Tab Button Style --- */
+.tab-btn-vertical {
+    display: flex;
+    flex-direction: column; /* Stack icon and text */
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 0.2rem; /* Vertical padding, minimal horizontal */
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.7rem; /* Smaller text */
+    color: var(--text-color, #103784);
+    text-align: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    width: 100%;
+    min-height: 60px; /* Ensure buttons have some height */
+    word-break: break-word; /* Wrap text if needed */
+}
+
+.tab-btn-vertical i {
+    font-size: 1.5rem; /* Icon size */
+    margin-bottom: 3px; /* Space between icon and text */
+    line-height: 1; /* Prevent extra space */
+}
+
+.tab-btn-vertical.active {
+    background-color: var(--primary-color-light, #e0f7ff);
+    color: var(--primary-color, #00aaff);
+    font-weight: 600;
+}
+
+.tab-btn-vertical:hover:not(.active) {
+    background-color: var(--table-hover-bg, rgba(224, 247, 255, 0.6));
+}
+
+/* --- NEW: Main Content Area --- */
+.settings-main-content {
+    flex-grow: 1; /* Allow content to take remaining space */
+    min-width: 0; /* Prevent content from overflowing flex container */
+}
+
+/* Style the card holding the tab content */
+.settings-content-card {
+    padding: 1rem;
+    margin-top: 0; /* Reset margin as layout handles spacing */
+    border-radius: 15px; /* Consistent rounding */
+}
+
+/* Tab Content Pane (General Styles) */
+.tab-pane {
+    padding: 0.5rem; /* Minimal internal padding, card provides main padding */
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-pane h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color, rgba(224, 247, 255, 0.8));
+    color: var(--primary-color, #00aaff);
+}
+
+/* --- Setting Item Styles (Adapted for Mobile) --- */
+.setting-item {
+    display: flex;
+    flex-direction: column; /* Stack label and control vertically */
+    align-items: flex-start; /* Align items to the start */
+    padding: 0.8rem 0; /* Vertical padding, no horizontal needed */
+    border-bottom: 1px dashed var(--border-color, rgba(224, 247, 255, 0.8));
+    gap: 0.5rem; /* Space between elements */
+}
+.tab-pane .setting-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.setting-toggle {
+    display: flex; /* Keep toggle and label side-by-side */
+    align-items: center;
+    width: 100%; /* Take full width */
+    justify-content: space-between; /* Push toggle to the right */
+}
+
+.setting-toggle label:not(.switch) { /* The text label */
+    margin: 0; /* Reset margin */
+    font-size: 0.9rem;
+    color: var(--text-color, #103784);
+    order: 1; /* Put label first */
+    flex-grow: 1; /* Allow label to grow */
+    padding-right: 10px; /* Space before the switch */
+}
+
+.setting-toggle .switch { /* The switch itself */
+    order: 2; /* Put switch second */
+    margin: 0; /* Reset margin */
+}
+
+.setting-item > label { /* Labels for non-toggle items (like input groups) */
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color, #103784);
+    margin-bottom: 0.3rem;
+}
+
+/* Input Group Styling */
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%; /* Make group take full width */
+}
+.input-group span {
+    font-size: 0.85rem;
+    color: var(--text-muted, #586069);
+    flex-shrink: 0; /* Prevent text like 'days' from shrinking too much */
+}
+.small-input,
+.input-group input[type="number"],
+.input-group input[type="text"] { /* Style text inputs too */
+    flex-grow: 1; /* Allow input to take available space */
+    max-width: 100px; /* Limit max width */
+    padding: 0.5rem 0.7rem;
+    font-size: 0.9rem;
+    text-align: right;
+    border: 1px solid var(--input-border, #ccc);
+    background: var(--input-bg, #fff);
+    color: var(--text-color, #103784);
+    border-radius: 6px;
+}
+
+.indented-controls {
+    width: 100%; /* Take full width */
+    margin-left: 0; /* No indent needed in vertical layout */
+    margin-top: 0.7rem;
+    padding-top: 0.7rem;
+    border-top: 1px dashed var(--border-color, rgba(224, 247, 255, 0.8));
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+.indented-controls > label { /* Specific label inside indented */
+    font-size: 0.85rem;
+    color: var(--text-muted, #586069);
+    margin-bottom: 0.2rem;
+}
+
+.save-button-container {
+    padding: 1rem 0 0 0; /* Padding top, remove others */
+    text-align: center; /* Center save button */
+}
+
+/* --- Toggle Switch Styling (Same as Desktop) --- */
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; bottom: 0; width: 44px; background-color: #ccc; transition: .4s; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; }
+input:checked + .slider { background-color: var(--primary-color, #00aaff); }
+input:focus + .slider { box-shadow: 0 0 1px var(--primary-color, #00aaff); }
+input:checked + .slider:before { transform: translateX(20px); }
+.slider.round { border-radius: 24px; }
+.slider.round:before { border-radius: 50%; }
+body.dark-theme .slider { background-color: #555; }
+
+/* Section Headers inside tab-pane */
+.setting-section-header {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted, #586069);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 1.5rem; /* Space above header */
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border-color, rgba(224, 247, 255, 0.8));
+    text-align: left; /* Align left for mobile */
+    background: none; /* Remove desktop background */
+}
+.tab-pane > .setting-section-header:first-child {
+    margin-top: 0;
+}
+
+/* Invoice Template Specific Styles (Adapted for Mobile) */
+.template-grid.mobile {
+    display: flex; /* Use flexbox for stacking */
+    flex-direction: column;
+    gap: 1rem;
+}
+.template-card {
+    display: flex;
+    flex-direction: row; /* Image left, info right */
+    align-items: center;
+    background: var(--input-bg, #fff); /* Give cards a background */
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, rgba(224, 247, 255, 0.8));
+}
+.template-image {
+    width: 60px; /* Smaller image */
+    height: auto;
+    object-fit: contain;
+    flex-shrink: 0;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+.template-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column; /* Stack name and button */
+    align-items: flex-start; /* Align text left */
+}
+.template-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+.select-btn { /* Style for the select button inside template card */
+    margin-top: auto; /* Push button to bottom if needed */
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* Ensure template modal image fits */
+.modal-image-full {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 1rem;
+}
+
+/* General Modal Adaptations */
+.modal-content {
+    padding: 1rem; /* Reduce padding slightly */
+}
+.modal-header h2 {
+    font-size: 1.1rem; /* Smaller modal titles */
+}
+.modal-actions { /* Ensure modal buttons stack nicely if needed */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

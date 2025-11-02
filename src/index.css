@@ -97,65 +97,132 @@ body {
 /* Glassmorphism Card */
 
 /* Search bar */
-.search-bar {
-    width: 20%;
-    padding: 0.75rem 1.25rem;
-    border: rgba(39, 63, 107, 0.7);
-    border-radius: 50px;
-    background: var(--modal-bg);
 
-    color: var(--text-color);
+/* Search bar */
+.search-bar {
+    width: 100%; /* full width of container or parent */
+    max-width: 300px; /* optional: limit width */
+    padding: 0.6rem 1.25rem;
+    border: 1px solid rgba(39, 63, 107, 0.3); /* subtle border */
+    border-radius: 15px; /* fully rounded pill shape */
+    background: var(--modal-bg, #ffffff);
+
+    color: var(--text-color, #272f6b);
     font-size: 1rem;
     outline: none;
 
-    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* soft shadow */
+    transition: all 0.25s ease;
+    position: relative;
+
+    /* Smooth inner placeholder text */
+    caret-color: var(--primary-color);
 }
 
-.search-bar:focus {
-    box-shadow: 0 0 0 3px var(--primary-color-light);
+/* Hover effect */
+.search-bar:hover {
     border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-/* Buttons */
-.btn {
-    padding: 0.4rem 0.9rem;       /* slightly reduced */
-    border: none;
-    border-radius: 50px;       /* slightly smaller radius */
-    background-color: var(--primary-color);
-    color: white;
-    font-size: 0.875rem;        /* slightly smaller text */
-    cursor: pointer;
-    transition: all 0.2s ease;
+/* Focus effect */
+.search-bar:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    background: var(--body-bg, #ffffff);
 }
+
+/* Optional: placeholder styling */
+.search-bar::placeholder {
+    color: rgba(39, 63, 107, 0.5);
+    font-weight: 400;
+}
+
+/* Optional: add a search icon inside (requires wrapping with a container) */
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 300px;
+}
+
+.search-container svg {
+    position: absolute;
+    left: 12px;
+    width: 18px;
+    height: 18px;
+    fill: rgba(39, 63, 107, 0.5);
+    pointer-events: none;
+}
+
+.search-bar.with-icon {
+    padding-left: 2.5rem; /* leave space for icon */
+}
+
+
+/* Glass Buttons - Light Theme */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    background: rgba(0, 170, 255, 0.12) ; /* faint glassy background */
+    border: 1px solid rgba(0, 170, 255, 0.3); /* visible faint border */
+    backdrop-filter: blur(8px); /* frosted effect */
+    -webkit-backdrop-filter: blur(8px);
+    color: #003366; /* darker readable text */
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(0, 50, 100, 0.25); /* darker shadow for light bg */
+}
+
 
 
 .btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 170, 255, 0.4);
+    transform: translateY(-2px) scale(1.02);
+    background: rgba(15, 165, 243, 0.65);
+    box-shadow: 0 6px 18px rgba(0, 50, 100, 0.35);
+    border-color: rgba(186, 217, 232, 0.45);
+    color: white;
 }
 
 .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 /* Cancel button modifier */
 .btn-cancel {
-    background-color: rgba(255, 107, 107, 0.15);
+    background: rgba(255, 107, 107, 0.15);
     border: 1px solid rgba(255, 107, 107, 0.4);
-    color: #ff6b6b;
+    color: #b30000; /* darker red text for visibility */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .btn-cancel:hover:not(:disabled) {
-    background-color: rgba(255, 107, 107, 0.25);
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    background: rgba(255, 107, 107, 0.25);
+    box-shadow: 0 6px 18px rgba(179, 0, 0, 0.35);
+    border-color: rgba(255, 107, 107, 0.55);
 }
 
-body.dark-theme .btn-cancel {
-    background-color: rgba(255, 107, 107, 0.1);
-    border-color: rgba(255, 107, 107, 0.4);
-    color: #ff9a9a;
+.dark-theme .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    background: rgba(0, 170, 255, 0.12); /* faint glassy background */
+    border: 1px solid rgba(0, 170, 255, 0.3); /* visible faint border */
+    backdrop-filter: blur(8px); /* frosted effect */
+    -webkit-backdrop-filter: blur(8px);
+    color: #ffffff; /* darker readable text */
+
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(0, 50, 100, 0.25); /* darker shadow for light bg */
 }
+
 
 /* Table Styles */
 .data-table {
@@ -166,7 +233,7 @@ body.dark-theme .btn-cancel {
 
 .data-table th,
 .data-table td {
-    padding: 1rem;
+    padding: 0.8rem;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
@@ -183,6 +250,55 @@ body.dark-theme .btn-cancel {
 
 .data-table tr:hover {
     background-color: var(--table-hover-bg);
+}
+
+/* Alternate row colors */
+.data-table tbody tr:nth-child(even) {
+    background-color: var(--body-bg); /* light grey */
+}
+
+.data-table tbody tr:nth-child(odd) {
+    background-color: transparent;
+}
+
+/* ---- Dark mode overrides ---- */
+.dark-theme .data-table {
+    color: #fff; /* Table body text */
+}
+
+.dark-theme .data-table th {
+    background: rgba(50, 50, 50, 0.9);
+    color: #fff; /* Table header text */
+    border-bottom: 1px solid #555;
+}
+
+.dark-theme .data-table td {
+    border-bottom: 1px solid #444;
+}
+
+/* Alternate row colors in dark theme */
+.dark-theme .data-table tbody tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.05); /* subtle light shade */
+}
+
+.dark-theme .data-table tbody tr:nth-child(odd) {
+    background-color: transparent;
+}
+
+
+/* Status colors in dark mode */
+.dark-theme .status-paid {
+    color: #90ee90; /* lighter green */
+}
+
+.dark-theme .status-pending {
+    color: #ffb84d; /* softer orange for contrast */
+}
+
+/* Download button stays visible in dark mode */
+.dark-theme .download-btn {
+    background-color: rgba(108, 219, 17, 0.3);
+    color: #fff;
 }
 
 /* Status Badges */
@@ -213,6 +329,7 @@ body.dark-theme .status-outofstock {
     background-color: #3b1717;
     color: #ff8b8b;
 }
+
 
 /* Modal Styles */
 .modal-overlay {
@@ -408,10 +525,10 @@ body.dark-theme .time-range-selector select:focus {
 
 /* Download Button */
 .download-btn {
-    background: linear-gradient(135deg, #54ff59, #34ff3d);
+    background: linear-gradient(135deg, rgba(84, 184, 255, 0.44), rgba(84, 184, 255, 0.44));
     color: white;
     border: none;
-    border-radius: 50%;
+    border-radius: 25%;
     width: 30px; /* Explicit size */
     height: 30px; /* Explicit size */
     cursor: pointer;
@@ -419,7 +536,6 @@ body.dark-theme .time-range-selector select:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
 
 .download-btn:hover {
@@ -879,11 +995,10 @@ body.dark-theme {
     flex: 1 1 0; /* make all three equal width */
     min-width: 220px;
     padding: 16px;
-
+    margin: 0 1rem 0 1rem;
     border-radius: 16px;
     background: var(--glass-bg);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 6px 18px var(--shadow-color);
+    border: 2px solid var(--border-color);
     display: flex;
     flex-direction: column;
     justify-content: flex-start; /* align content to top so stretched cards look consistent */

@@ -1,29 +1,513 @@
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5); /* semi-transparent dark background */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000; /* high z-index to be above everything */
-    transform: scale(0.8);
-    opacity: 0;
-    transition: transform 0.2s ease, opacity 0.2s ease;
+/* src/pages/BillingPage.css */
+
+/* --- Main Layout --- */
+.billing-page {
+    /* --- REQUEST 1: Add padding-bottom to main page to avoid footer overlap --- */
+    padding-bottom: 90px; /* Space for the sticky footer */
 }
 
-.popup {
-    background: #fff;
-    border-radius: 12px;
-    padding: 2rem;
-    max-width: 400px;
-    width: 90%;
+.billing-layout-mobile {
+    display: flex;
+    flex-direction: column; /* Stack sections vertically */
+    gap: 1.5rem; /* Space between sections */
+}
+
+.current-bill-section,
+.summary-section {
+    flex-basis: 100%; /* Each section takes full width */
+}
+
+/* Common Card Styling (applies glass-card from global) */
+.current-bill-section .glass-card {
+    padding: 1rem; /* Adjust padding for mobile */
+    margin-top: 0; /* Remove extra margin if layout handles it */
+}
+
+/* --- REQUEST 2: Update outer glass-card padding to be minimal --- */
+.summary-section .glass-card {
+    padding: 0.5rem; /* Padding is now handled by summary-box */
+    margin-top: 0;
+}
+
+
+/* --- REQUEST 4: Header/Button Alignment --- */
+.current-bill-header {
+    display: flex;
+    flex-direction: column; /* Stack title and actions on mobile */
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color, #eee);
+}
+
+.current-bill-header h3 {
+    margin: 0; /* Remove default margins */
+    font-size: 1.2rem;
+    color: var(--text-color);
+    text-align: center; /* Center title */
+}
+
+.current-bill-actions {
+    display: flex;
+    justify-content: space-between; /* This is the key */
+    align-items: center;
+    width: 100%;
+}
+
+.customer-action-buttons-left {
+    display: flex;
+    gap: 0.5rem; /* Space between 'Change' and 'Create' */
+}
+
+.btn-danger {
+    background-color: var(--error-color, #d9534f);
+    border-color: var(--error-color, #d9534f);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: #c9302c; /* A darker red for hover */
+    border-color: #ac2525;
+}
+/* --- End of REQUEST 4 --- */
+
+.customer-display-box {
+    border: 2px dashed var(--border-color);
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: all 0.3s ease;
+    margin-left: 5px;
+    min-height: 50px;
+    justify-content: center;
+    background-color: var(--input-bg); /* Add subtle background */
+}
+.customer-display-box strong {
+    font-size: 1rem;
+}
+.customer-display-box small {
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+/* Product Search */
+.product-search-container {
+    margin-top: 1rem;
+    position: relative;
+}
+
+.search-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 0.4rem 0.8rem; /* Adjust padding */
+    background-color: var(--input-bg);
+}
+.search-input {
+    flex-grow: 1;
+    padding: 6px 5px;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    outline: none;
+}
+.search-input-wrapper svg { /* Style the search icon */
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.search-results-mobile {
+    position: absolute;
+    top: calc(100% + 4px); /* Position below input */
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--modal-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 200px; /* Limit height */
+    overflow-y: auto;
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+.search-result-item-mobile {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.search-result-item-mobile:last-child {
+    border-bottom: none;
+}
+.search-result-item-mobile:hover { /* Simple hover */
+    background-color: var(--table-hover-bg);
+}
+.search-result-item-mobile strong {
+    font-size: 0.9rem;
+}
+.search-result-item-mobile small {
+    display: block;
+    font-size: 0.75em;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.search-no-results {
+    padding: 1rem;
     text-align: center;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    color: var(--text-muted);
+    font-size: 0.9rem;
 }
-.overlay .popup {
-    transform: scale(1);
-    opacity: 1;
+
+/* Cart */
+.cart-items {
+    margin-top: 1rem;
 }
+.cart-empty-message {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 1rem 0;
+    font-style: italic;
+}
+.cart-table-wrapper-mobile {
+    overflow-x: auto; /* Allow horizontal scroll if needed */
+    width: 100%;
+}
+.cart-table-mobile {
+    width: 100%;
+    font-size: 0.85rem; /* Smaller font for table */
+}
+.cart-table-mobile th,
+.cart-table-mobile td {
+    padding: 0.5rem 0.3rem; /* Tighter padding */
+    vertical-align: middle; /* Align content vertically */
+    border: 1px solid var(--border-color); /* Add borders */
+}
+.cart-table-mobile th {
+    white-space: nowrap; /* Prevent headers wrapping */
+    background-color: var(--primary-color-light);
+    font-weight: 600;
+}
+/* Specific Column Widths (Adjust as needed) */
+.cart-table-mobile th:nth-child(1), .cart-table-mobile td:nth-child(1) { width: 30%; } /* Item */
+.cart-table-mobile th:nth-child(2), .cart-table-mobile td:nth-child(2) { width: 50px; text-align: center; } /* Qty */
+.cart-table-mobile th:nth-child(3), .cart-table-mobile td:nth-child(3) { width: 50px; text-align: center; } /* Dis% */
+.cart-table-mobile th:nth-child(4), .cart-table-mobile td:nth-child(4) { width: 60px; text-align: right; } /* Selling */
+.cart-table-mobile th:nth-child(5), .cart-table-mobile td:nth-child(5) { min-width: 80px; } /* Details */
+.cart-table-mobile th:nth-child(6), .cart-table-mobile td:nth-child(6) { width: 40px; text-align: center; } /* Act */
+
+.qty-input-mobile {
+    width: 45px;
+    padding: 4px;
+    text-align: center;
+    border-radius: 6px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    -moz-appearance: textfield; /* Hide arrows Firefox */
+}
+.qty-input-mobile::-webkit-outer-spin-button, /* Hide arrows Chrome, Safari, Edge */
+.qty-input-mobile::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.details-textarea-mobile {
+    width: 100%;
+    min-height: 30px;
+    max-height: 60px; /* Limit height */
+    padding: 4px;
+    border-radius: 6px;
+    font-size: 0.8rem; /* Smaller font */
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+    resize: vertical; /* Allow vertical resize */
+    line-height: 1.2;
+}
+
+.remove-btn-mobile {
+    background: none;
+    border: none;
+    color: var(--error-color, #c80b0b); /* Use error color */
+    cursor: pointer;
+    padding: 4px;
+    display: flex; /* Center icon */
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- Summary Section --- */
+.summary-section h3 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: var(--text-color);
+}
+
+/* --- REQUEST 2 & 3: Summary Box Styling --- */
+.summary-box {
+    background: var(--primary-color-light, #e6f7ff);
+    border-radius: 25px;
+    padding: 1rem;
+    /* Use margin to get 10px-ish padding from page sides */
+    margin: 0.5rem;
+}
+/* Add margin to the second box */
+.summary-box + .summary-box {
+    margin-top: 1rem;
+}
+
+/* Style elements inside the first box */
+.summary-box .invoice-summary {
+    border-top: none; /* Remove the dashed border */
+    padding-top: 0;
+    margin-top: 0;
+}
+
+/* Style elements inside the second box */
+.summary-box .remarks-section-mobile {
+    margin: 0; /* Remove default margins */
+}
+.summary-box .payment-methods-mobile {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--primary-color, #007bff);
+}
+/* --- End of REQUEST 2 & 3 --- */
+
+
+.invoice-summary p, .invoice-summary h4, .invoice-summary h5 {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.6rem; /* Consistent spacing */
+    align-items: center;
+}
+.invoice-summary h4 { /* Final Total */
+    margin-top: 0.8rem;
+    color: var(--primary-color);
+    font-size: 1.15em; /* Make it slightly larger */
+    font-weight: bold;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border-color);
+}
+.tax-breakdown-mobile {
+    font-size: 0.8em; /* Smaller text for breakdown */
+    color: var(--text-muted);
+    padding-left: 15px; /* Indent breakdown */
+    margin-top: -8px;
+    margin-bottom: 8px;
+}
+.tax-breakdown-mobile p {
+    margin: 2px 0;
+    justify-content: flex-start; /* Align left */
+    gap: 5px;
+}
+.tax-breakdown-mobile span:last-child {
+    margin-left: auto; /* Push value to the right */
+}
+.discount span { font-weight: bold; }
+.tax span { font-weight: bold; }
+
+/* Partial Payment */
+.payment-input-group-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0.8rem 0 0.3rem 0;
+    gap: 8px;
+}
+.payment-input-group-mobile label {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+.paying-amount-input-mobile {
+    width: 110px; /* Slightly wider */
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    text-align: right;
+    font-weight: bold;
+}
+.remaining-total-mobile {
+    margin: 0 0 1rem 0;
+    text-align: right;
+    color: var(--error-color, #c80b0b); /* Use error color for due */
+    font-size: 1em;
+    font-weight: bold;
+}
+
+/* Remarks */
+.remarks-section-mobile label { display: block; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.9rem; }
+.remarks-textarea-mobile {
+    width: 100%; min-height: 50px; padding: 8px; border-radius: 8px;
+    border: 1px solid var(--input-border); background: var(--input-bg);
+    resize: vertical; font-size: 0.9rem; color: var(--text-color);
+}
+
+/* --- REQUEST 5: Vertical Payment Methods --- */
+.payment-methods-mobile { margin-top: 1rem; }
+.payment-methods-mobile h5 {
+    margin-bottom: 0.7rem;
+    color: var(--primary-color);
+    font-size: 1rem;
+    text-align: left; /* Aligned left */
+}
+.payment-options-mobile {
+    display: none; /* Hide old horizontal one */
+}
+
+.payment-options-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+.payment-label-vertical {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Space between icon and text */
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-weight: 500;
+    font-size: 0.95rem;
+    background: var(--input-bg, #f9f9f9);
+    color: var(--text-color);
+    user-select: none;
+}
+.payment-label-vertical svg { /* Style for FA icons */
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    transition: color 0.15s ease;
+    width: 20px; /* Give icon a fixed width */
+    text-align: center;
+}
+.payment-label-vertical input[type="radio"] {
+    display: none; /* Hide the radio button */
+}
+.payment-label-vertical.selected {
+    background: var(--primary-color-light);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+.payment-label-vertical.selected svg {
+    color: var(--primary-color);
+}
+.payment-label-vertical.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background: var(--body-bg, #f0f0f0);
+}
+body.dark-theme .payment-label-vertical.disabled {
+    background: #333;
+}
+/* --- End Request 5 --- */
+
+
+/* Original .process-payment-btn styles */
+.process-payment-btn {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+.process-payment-btn:hover:not(:disabled) {
+    background: linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1)), var(--primary-color);
+    color: white;
+}
+
+/* --- Modals --- */
+/* Customer Select Modal List */
+.customer-modal-list { list-style: none; max-height: 60vh; overflow-y: auto; margin-top: 1rem; padding: 0;}
+.customer-modal-list li {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.8rem 0.5rem; border-bottom: 1px solid var(--border-color); cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.customer-modal-list li:last-child { border-bottom: none; }
+.customer-modal-list li:hover { background-color: var(--primary-color-light); }
+.customer-modal-list li span { font-size: 0.95rem; }
+.customer-modal-list li small { color: var(--text-muted); font-size: 0.8em; margin-left: 10px; }
+
+/* Order Summary Modal */
+.order-summary-mobile { padding: 0.5rem; } /* Reduce padding */
+.summary-section-mobile { margin-bottom: 1rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 1rem; }
+.summary-section-mobile:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.summary-section-mobile h3 { font-size: 1.1rem; color: var(--primary-color); margin-bottom: 0.5rem; }
+.summary-section-mobile p { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem; }
+.summary-section-mobile p span, .summary-section-mobile p strong { text-align: right; }
+.totals-mobile h4 { font-size: 1.1em; color: var(--primary-color); margin-top: 0.5rem; }
+.totals-mobile h4 span { font-weight: bold; }
+
+/* Loading Overlay */
+.loading-overlay-mobile { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.3s ease; }
+.loading-content-mobile { background: var(--modal-bg); padding: 1.5rem; border-radius: 15px; text-align: center; color: var(--text-color); box-shadow: 0 5px 15px var(--shadow-color); }
+.loading-content-mobile h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary-color); }
+.spinner-mobile { width: 30px; height: 30px; border: 4px solid var(--border-color); border-top: 4px solid var(--primary-color); border-radius: 50%; margin: 0 auto; }
+.loading-content-mobile p { margin-top: 0.8rem; font-size: 0.9rem; }
+
+/* Success Popup */
+.success-actions-mobile { display: flex; justify-content: center; gap: 0.7rem; margin-top: 1.5rem; flex-wrap: wrap; }
+.success-actions-mobile .btn { font-size: 0.85rem; padding: 0.6rem 1rem; } /* Smaller buttons */
+.success-actions-mobile .btn-icon { display: flex; align-items: center; gap: 5px; }
+
+
+/* Keyframe Animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.discount-input-mobile{
+    width: 40px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    text-align: right;
+}
+
+/* --- REQUEST 1: STICKY FOOTER ACTIONS --- */
+.sticky-footer-actions {
+    position: fixed; /* Stick to viewport bottom */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 1rem;
+    padding: 1rem; /* Added more padding for better spacing */
+    background: var(--modal-bg, #ffffff);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+    z-index: 100;
+    border-top: 1px solid var(--border-color, #eee);
+}
+
+.sticky-footer-actions .btn,
+.sticky-footer-actions .process-payment-btn {
+    flex: 1; /* Make both buttons share the space */
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.8rem; /* Ensure good tap size */
+}
+
+/* Re-style outline button for this context if needed */
+.sticky-footer-actions .btn-outline {
+    background: var(--input-bg, #f5f5f5);
+    border-color: var(--border-color, #ddd);
+    color: var(--text-color, #333);
+}
+
+/* --- End of REQUEST 1 --- */
+

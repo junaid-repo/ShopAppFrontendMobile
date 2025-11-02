@@ -6,7 +6,7 @@ export const ConfigProvider = ({ children }) => {
   const [config, setConfig] = useState(null);
 
   useEffect(() => {
-    fetch("/config-prod.json")
+    fetch("/config.json")
       .then((res) => res.json())
       .then((data) => setConfig(data))
       .catch((err) => {
