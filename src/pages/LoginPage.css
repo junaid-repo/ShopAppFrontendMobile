@@ -32,7 +32,7 @@
 .login-logo {
     font-size: 2rem;
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: 5rem;
 }
 
 h2 {
@@ -44,6 +44,7 @@ h2 {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    margin-left: 4rem;
 }
 
 .input-group input {
@@ -76,8 +77,9 @@ h2 {
 }
 
 .login-btn {
-    width: 100%;
+    width: 80%;
     margin-top: 0.5rem;
+    color: white;
 }
 
 .same-size-btn {

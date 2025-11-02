@@ -141,31 +141,6 @@
     margin-bottom: 0.3rem;
 }
 
-/* Input Group Styling */
-.input-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%; /* Make group take full width */
-}
-.input-group span {
-    font-size: 0.85rem;
-    color: var(--text-muted, #586069);
-    flex-shrink: 0; /* Prevent text like 'days' from shrinking too much */
-}
-.small-input,
-.input-group input[type="number"],
-.input-group input[type="text"] { /* Style text inputs too */
-    flex-grow: 1; /* Allow input to take available space */
-    max-width: 100px; /* Limit max width */
-    padding: 0.5rem 0.7rem;
-    font-size: 0.9rem;
-    text-align: right;
-    border: 1px solid var(--input-border, #ccc);
-    background: var(--input-bg, #fff);
-    color: var(--text-color, #103784);
-    border-radius: 6px;
-}
 
 .indented-controls {
     width: 100%; /* Take full width */

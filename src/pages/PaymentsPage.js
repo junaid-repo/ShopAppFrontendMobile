@@ -7,7 +7,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import {
     MdClose,
     MdPayment,
-    MdRefresh
+    MdRefresh,
+    MdHistory
 } from 'react-icons/md';
 import axios from 'axios';
 
@@ -23,6 +24,26 @@ const formatDate = (dateString) => {
         return `${day}-${month}-${year}`;
     } catch (error) {
         return 'Invalid Date';
+    }
+};
+// Helper function to format date and time as 'dd-mm-yyyy hh:mm'
+const formatDateTime = (isoDate) => {
+    if (!isoDate) return "";
+    try {
+        const d = new Date(isoDate);
+        if (isNaN(d.getTime())) return "";
+
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+
+        return `${day}-${month}-${year} ${hours}:${minutes}`;
+    } catch (e) {
+        console.error("Error formatting date: ", e);
+        return "";
     }
 };
 
@@ -46,6 +67,12 @@ const PaymentsPage = () => {
     const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
     const [paymentError, setPaymentError] = useState("");
     const [themeColors, setThemeColors] = useState({ paid: '#006400', due: '#8b0000' });
+
+    // --- ⭐️ NEW State for History Modal ---
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [currentHistoryPayment, setCurrentHistoryPayment] = useState(null); // The whole payment object
+    const [historyData, setHistoryData] = useState([]); // Array for history results
+    const [historyLoading, setHistoryLoading] = useState(false); // Loading spinner for modal
 
     // --- Filter State ---
     const [searchTerm, setSearchTerm] = useState(() => {
@@ -73,6 +100,9 @@ const PaymentsPage = () => {
     const now = new Date();
     const defaultFrom = new Date(now.getFullYear(), now.getMonth(), 1);
     const defaultTo = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // --- NEW State for Hover Effects ---
+    const [hoveredButton, setHoveredButton] = useState(null);
 
     const _savedFilters = (() => {
         try {
@@ -169,7 +199,49 @@ const PaymentsPage = () => {
             return matchesSearch && matchesMode && withinRange;
         });
     }, [payments, searchTerm, paymentMode, fromDate, toDate]); // Add fromDate, toDate
+    const handleShowHistory = async (payment) => {
+        // Set current payment and open modal
+        setCurrentHistoryPayment(payment);
+        setShowHistoryModal(true);
+        setHistoryLoading(true);
+        setHistoryData([]); // Clear previous data
 
+        try {
+            const payload = {
+                orderNumber: payment.saleId,
+                PaymentReferenceNumber: payment.id
+            };
+
+            // Make the API call
+            const response = await axios.post(
+                `${apiUrl}/api/shop/payment/history`, // <-- Make sure this endpoint is correct
+                payload,
+                { withCredentials: true }
+            );
+
+            // Assuming the response.data is an array [ {token number, date, amount}, ... ]
+            // Make sure keys match your API response
+            setHistoryData(response.data);
+
+        } catch (error) {
+            console.error("Error fetching payment history:", error);
+            alert("Failed to fetch payment history. Please try again.");
+            setShowHistoryModal(false); // Close modal on error
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    // --- ⭐️ NEW: Calculate Total Paid from History ---
+    const totalPaidFromHistory = useMemo(() => {
+        if (!historyData || historyData.length === 0) {
+            return 0;
+        }
+        return historyData.reduce((acc, item) => {
+            // Ensure 'amount' key matches your API response
+            return acc + (Number(item.amount) || 0);
+        }, 0);
+    }, [historyData]);
 
     // --- *** ADDED: Client-Side Totals Calculation (from Desktop) *** ---
     const { totalPaid, totalDue, dueInvoicesCount, modeCounts } = useMemo(() => {
@@ -459,53 +531,71 @@ const PaymentsPage = () => {
                     </tr>
                     </thead>
                     <tbody>
-                    {isLoading ? (
-                        <tr><td colSpan="6" style={{ textAlign: "center", padding: "20px" }}>Loading...</td></tr>
-                    ) : currentPayments.length > 0 ? ( // Use currentPayments
-                        currentPayments.map((payment) => ( // Use currentPayments
-                            <tr key={payment.id}>
-                                <td
-                                    style={{ padding: "8px 4px", cursor: "pointer", color: "var(--primary-color)", fontWeight: "bold" }}
+                    {currentPayments.length > 0 ? (
+                        currentPayments.map((payment) => {
+                            // --- NEW: Hover logic for this row ---
+                            const isRemindHovered = hoveredButton === `${payment.id}-remind`;
+                            const isUpdateHovered = hoveredButton === `${payment.id}-update`;
 
+                            return (
+                                // --- ⭐️ MODIFIED: Added onClick and cursor style ---
+                                <tr
+                                    key={payment.id}
+                                    onClick={() => handleShowHistory(payment)}
+                                    style={{ cursor: 'pointer' }}
                                 >
-                                    {payment.saleId}
-                                </td>
-                                <td style={{ whiteSpace: "nowrap", padding: "8px 4px" }}>
-                                    {formatDate(payment.date)}
-                                </td>
-                                <td style={{ padding: "8px 4px", color: themeColors.paid, fontWeight: 'bold' }}>
-                                    {/* Ensure 'paid' exists and is a number */}
-                                    ₹{(Number(payment.paid) || 0).toLocaleString()}
-                                </td>
-                                <td style={{ padding: "8px 4px", color: themeColors.due, fontWeight: 'bold' }}>
-                                    {/* Ensure 'due' exists and is a number */}
-                                    ₹{(Number(payment.due) || 0).toLocaleString()}
-                                </td>
-                                <td style={{ padding: "8px 4px" }}>
-                            <span className={payment.status === 'Paid' ? 'status-paid' : 'status-pending'}>
-                              {payment.status}
-                            </span>
-                                </td>
-                                <td style={{ padding: "8px 4px" }}>
-                                    {payment.status !== 'Paid' && (
-                                        <button
-                                            className="download-btn"
-                                            title="Update Payment"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleOpenPaymentModal(payment);
-                                            }}
+
+                                    <td>{payment.saleId}</td>
+                                    <td>{formatDate(payment.date)}</td>
+
+
+                                    {/* --- MODIFIED: Added theme color --- */}
+                                    <td style={{ color: themeColors.paid, fontWeight: 'bold' }}>
+                                        ₹{payment.paid.toLocaleString()}
+                                    </td>
+                                    {/* --- MODIFIED: Added theme color --- */}
+                                    <td style={{ color: themeColors.due, fontWeight: 'bold' }}>
+                                        ₹{payment.due.toLocaleString()}
+                                    </td>
+                                    <td> {/* Status is not a button, so stop propagation here */}
+                                        <span
+                                            className={payment.status === 'Paid' ? 'status-paid' : 'status-pending'}
+                                            onClick={(e) => e.stopPropagation()}
                                         >
-                                            <i className="fa-duotone fa-solid fa-credit-card" style={{color:'var(--text-color)', fontSize: '1.3rem'}}></i>
-                                        </button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))
+                                                {payment.status}
+                                            </span>
+                                    </td>
+
+                                    {/* --- UPDATE PAYMENT BUTTON (Hover effect added) --- */}
+                                    <td>
+                                        {(payment.status === 'SemiPaid' || payment.status === 'UnPaid') && (
+                                            <button
+                                                className="download-btn"
+                                                title="Update Payment"
+                                                onMouseEnter={() => setHoveredButton(`${payment.id}-update`)}
+                                                onMouseLeave={() => setHoveredButton(null)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // <-- Stop propagation
+                                                    handleOpenPaymentModal(payment);
+                                                }}
+                                                style={{
+                                                    cursor: "pointer",
+                                                    color: 'var(--text-color)'
+                                                }}
+                                            >
+
+                                                <i className="fa-duotone fa-solid fa-credit-card"
+                                                   style={{fontSize: '17px'}}></i>
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })
                     ) : (
                         <tr>
-                            <td colSpan="6" style={{ textAlign: "center", padding: "8px 4px" }}>
-                                No records found for the selected filters.
+                            <td colSpan="10" style={{ textAlign: "center" }}> {/* <-- Updated colSpan to 10 */}
+                                No records found
                             </td>
                         </tr>
                     )}
@@ -594,6 +684,83 @@ const PaymentsPage = () => {
                                 <button className="btn" onClick={handleConfirmUpdatePayment} disabled={isUpdatingPayment}>
                                     {isUpdatingPayment ? 'Processing...' : 'Confirm Payment'}
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showHistoryModal && currentHistoryPayment && (
+                <div className="order-modal-overlay" onClick={() => setShowHistoryModal(false)}>
+                    <div className="order-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <div className="order-modal-header">
+                            <h2>
+                                <MdHistory style={{ marginRight: '8px', verticalAlign: 'bottom' }} />
+                                Payment History for #{currentHistoryPayment.saleId}
+                            </h2>
+                            <button className="close-button" onClick={() => setShowHistoryModal(false)}>
+                                <MdClose size={28} />
+                            </button>
+                        </div>
+
+                        <div className="order-modal-body" style={{ padding: '0 20px 10px 20px', minHeight: '150px' }}>
+                            {historyLoading ? (
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '150px', fontSize: '1.1em' }}>
+                                    Loading history...
+                                </div>
+                            ) : historyData.length === 0 ? (
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '150px', fontSize: '1.1em', color: 'var(--text-secondary)' }}>
+                                    No payment history found.
+                                </div>
+                            ) : (
+                                <table className="data-table" style={{ width: '100%', marginTop: '15px' }}>
+                                    <thead>
+                                    <tr>
+                                        {/* Ensure 'tokenNumber' key matches your API response */}
+                                        <th>Token #</th>
+                                        {/* Ensure 'date' key matches your API response */}
+                                        <th>Date</th>
+                                        {/* Ensure 'amount' key matches your API response */}
+                                        <th>Paid Amount</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {historyData.map((item, index) => (
+                                        <tr key={item.tokenNumber || index}>
+                                            <td>{item.tokenNumber}</td>
+                                            <td>{formatDateTime(item.date)}</td>
+                                            <td style={{ textAlign: 'right', paddingRight: '10px' }}>
+                                                ₹{item.amount.toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+
+                        {/* --- History Modal Footer --- */}
+                        <div className="order-modal-footer" style={{ padding: '15px 20px', background: 'var(--glass-bg)', borderTop: '1px solid var(--border-color)', borderRadius: '0 0 12px 12px' }}>
+                            <div className="payment-summary-box">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1em', marginBottom: '10px' }}>
+                                    <span>Total Paid (from history):</span>
+                                    <strong style={{ color: 'green' }}>
+                                        ₹{totalPaidFromHistory.toLocaleString()}
+                                    </strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1em', marginBottom: '10px' }}>
+                                    <span>Amount Due (current):</span>
+                                    <strong style={{ color: '#d32f2f' }}>
+                                        ₹{currentHistoryPayment.due.toLocaleString()}
+                                    </strong>
+                                </div>
+                                <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '10px 0' }} />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2em', fontWeight: 'bold' }}>
+                                    <span>Total Invoice Amount:</span>
+                                    <strong>
+                                        ₹{currentHistoryPayment.amount.toLocaleString()}
+                                    </strong>
+                                </div>
                             </div>
                         </div>
                     </div>

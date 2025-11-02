@@ -450,7 +450,7 @@ const LoginPage = ({ onLogin }) => {
                         <input
                             type="text"
                             placeholder="Username"
-                            style={{borderRadius: "30px", width: "150%"}}
+                            style={{borderRadius: "30px", maringLeft: '10px', width: "80%"}}
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required
