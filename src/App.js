@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'; // Added useCallback
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react'; // Added useCallback & useContext
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import MainLayout from './components/MainLayout';
@@ -8,7 +8,6 @@ import SalesPage from './pages/SalesPage';
 import CustomersPage from './pages/CustomersPage';
 import PaymentsPage from './pages/PaymentsPage';
 import BillingPage from './pages/BillingPage';
-// Removed BillingPage2 - Assuming it's desktop specific or replaced
 import ReportsPage from './pages/ReportsPage';
 import UserProfilePage from './pages/UserProfilePage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -16,47 +15,53 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import HelpPage from './pages/HelpPage';
 import Notification from './pages/Notification';
-import SettingsPage from './pages/SettingsPage'; // <-- ADDED
-import ChatPage from './pages/ChatPage';       // <-- ADDED
-// Removed AdminChatPage - Assuming mobile uses regular chat
+import SettingsPage from './pages/SettingsPage';
+import ChatPage from './pages/ChatPage';
+// --- NEW IMPORTS ---
+import SubscriptionPage from './pages/SubscriptionPage';
+import PremiumGuard from './context/PremiumGuard';
+import { PremiumProvider, usePremium } from './context/PremiumContext';
+import { PremiumModalProvider } from './context/PremiumModalContext';
+import PremiumModal from './components/PremiumModal';
+// --- END NEW IMPORTS ---
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useConfig } from "./pages/ConfigProvider";
 import { useSearchKey } from "./context/SearchKeyContext";
-import { Toaster } from 'react-hot-toast'; // <-- ADDED
-import { AlertProvider } from './context/AlertContext'; // <-- ADDED
-import AlertDialog from './components/AlertDialog'; // <-- ADDED
+import { Toaster } from 'react-hot-toast';
+import { AlertProvider } from './context/AlertContext';
+import AlertDialog from './components/AlertDialog';
 
 const queryClient = new QueryClient();
 
-function App() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [userData, setUserData] = useState(null); // Store basic user data
-    const [isLoading, setIsLoading] = useState(true); // Added loading state
+// --- NEW AppContent COMPONENT ---
+// Contains all app logic, wrapped by providers
+function AppContent() {
+    const [user, setUser] = useState(null); // Replaced isAuthenticated & userData
+    const [isLoading, setIsLoading] = useState(true);
     const [warning, setWarning] = useState(false);
     const [countdown, setCountdown] = useState(60);
     const countdownRef = useRef(null);
     const inactivityTimerRef = useRef(null);
     const config = useConfig();
-    const apiUrl = config?.API_URL || ""; // Use || for default
+    const apiUrl = config?.API_URL || "";
+
+    // --- NEW: Get premium setter from context ---
+    const { setIsPremium } = usePremium();
 
     const [theme, setTheme] = useState(() => {
         const savedTheme = localStorage.getItem('theme');
-        // If theme exists in localStorage, use it, otherwise default to 'light' for now
         return savedTheme || 'light';
     });
 
-    // Default page state
     const [currentPage, setCurrentPage] = useState('dashboard');
 
     useEffect(() => {
-        document.body.classList.remove('light-theme', 'dark-theme'); // Clear existing
+        document.body.classList.remove('light-theme', 'dark-theme');
         document.body.classList.add(theme === 'dark' ? 'dark-theme' : 'light-theme');
         localStorage.setItem('theme', theme);
-
         const metaThemeColor = document.querySelector('meta[name="theme-color"]');
         if (metaThemeColor) {
-            // Use more specific dark/light colors if available
             metaThemeColor.setAttribute('content', theme === 'dark' ? '#10102a' : '#f0f8ff');
         }
     }, [theme]);
@@ -65,40 +70,41 @@ function App() {
         setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
     };
 
-    // --- UPDATED: Check session and fetch settings ---
+    // --- UPDATED: checkSession to use new endpoint and set premium status ---
     const checkSession = useCallback(async () => {
         setIsLoading(true);
         let initialAuth = false;
-        let fetchedUserData = null;
 
         try {
-            // 1. Check user session
-            const sessionResponse = await fetch(`${apiUrl}/api/shop/user/profile`, {
+            // 1. Check user session & role
+            const sessionResponse = await fetch(`${apiUrl}/api/shop/user/profileWithRole`, {
                 method: 'GET',
                 credentials: 'include',
             });
 
             if (sessionResponse.ok) {
-                fetchedUserData = await sessionResponse.json();
-                console.log('User:', fetchedUserData?.username);
-                setUserData(fetchedUserData);
-                setIsAuthenticated(true);
+                const data = await sessionResponse.json();
+                setUser(data); // Set user object
                 initialAuth = true; // Mark as initially authenticated for settings fetch
-                handleUserActivity(); // Start/reset timer only on successful auth
-            } else {
-                if (sessionResponse.status === 401) {
-                    console.log("Session check returned 401, user not authenticated.");
+
+                // Set premium status
+                if (data.roles && data.roles.includes('ROLE_PREMIUM')) {
+                    setIsPremium(true);
                 } else {
-                    console.error('Session check failed with status:', sessionResponse.status);
+                    setIsPremium(false);
                 }
-                setIsAuthenticated(false);
-                setUserData(null);
+
+                handleUserActivity(); // Start/reset timer
+
+            } else {
+                setUser(null);
+                setIsPremium(false);
                 clearTimers(); // Clear timers if session fails
             }
         } catch (error) {
             console.error('Error checking session:', error);
-            setIsAuthenticated(false);
-            setUserData(null);
+            setUser(null);
+            setIsPremium(false);
             clearTimers(); // Clear timers on error
         }
 
@@ -114,186 +120,188 @@ function App() {
                     const settingsData = await settingsResponse.json();
                     console.log("Fetched User Settings:", settingsData);
 
-                    // Apply theme default *only if* localStorage theme wasn't already set
                     const savedTheme = localStorage.getItem('theme');
                     if (!savedTheme && settingsData?.ui?.darkModeDefault) {
                         setTheme('dark');
                     } else if (!savedTheme) {
-                        setTheme('light'); // Explicitly set light if no setting and no saved theme
+                        setTheme('light');
                     }
 
-                    // Apply default page *only if* current page is still the initial 'dashboard'
                     if (settingsData?.ui?.billingPageDefault && currentPage === 'dashboard') {
-                        setCurrentPage('billing'); // Use 'billing', assuming 'billing2' is desktop only
+                        setCurrentPage('billing');
                     }
 
-                    // Save relevant settings to localStorage
+                    // Save settings to localStorage
                     localStorage.setItem('autoPrintInvoice', settingsData?.ui?.autoPrintInvoice || 'false');
                     localStorage.setItem('autoSendInvoice', settingsData?.billing?.autoSendInvoice || 'false');
-                    localStorage.setItem('doParitalBilling', settingsData?.billing?.showPartialPaymentOption || 'true'); // Default to true?
-                    localStorage.setItem('showRemarksOptions', settingsData?.billing?.showRemarksOnSummarySide || 'true'); // Default to true?
-                    // Add other settings as needed
+                    localStorage.setItem('doParitalBilling', settingsData?.billing?.showPartialPaymentOption || 'true');
+                    localStorage.setItem('showRemarksOptions', settingsData?.billing?.showRemarksOnSummarySide || 'true');
 
                 } else {
                     console.warn("Could not fetch user settings. Using defaults.");
-                    // Ensure defaults are set if fetch fails and no theme is saved
                     if (!localStorage.getItem('theme')) setTheme('light');
                 }
             } catch (settingsError) {
                 console.error('Error fetching user settings:', settingsError);
-                if (!localStorage.getItem('theme')) setTheme('light'); // Ensure default on error
+                if (!localStorage.getItem('theme')) setTheme('light');
             }
         }
-        setIsLoading(false); // Finish loading
-    }, [apiUrl, currentPage]); // Added currentPage dependency for default page logic
+        setIsLoading(false);
+    }, [apiUrl, currentPage, setIsPremium]); // Added setIsPremium dependency
 
 
     const handleLogin = () => {
-        // After login, immediately check session and settings
         checkSession();
     };
 
+    // --- UPDATED: handleLogout to clear user and premium state ---
     const handleLogout = async () => {
         try {
             await fetch(`${apiUrl}/auth/logout`, { method: 'POST', credentials: 'include' });
         } catch (e) { console.error('Logout failed', e); }
-        setIsAuthenticated(false);
-        setUserData(null);
-        setCurrentPage('dashboard'); // Reset page on logout
+        setUser(null);
+        setIsPremium(false);
+        setCurrentPage('dashboard');
         clearTimers();
         setWarning(false);
-        localStorage.removeItem('theme'); // Optional: clear theme on logout
-        // Optionally clear other settings from localStorage if needed
-        // localStorage.removeItem('autoPrintInvoice');
-        // ...
+        localStorage.removeItem('theme');
     };
 
-    // --- Inactivity Timer Logic (Kept Mobile's Simpler Version) ---
+    // --- Inactivity Timer Logic ---
     const clearTimers = useCallback(() => {
         if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
         if (countdownRef.current) clearInterval(countdownRef.current);
         inactivityTimerRef.current = null;
         countdownRef.current = null;
-    }, []); // No dependencies, safe to memoize
-
+    }, []);
 
     const startInactivityWarning = useCallback(() => {
-        clearTimers(); // Clear previous timers first
+        clearTimers();
         inactivityTimerRef.current = setTimeout(() => {
             setWarning(true);
-            let timeLeft = 60; // Mobile countdown duration
+            let timeLeft = 60;
             setCountdown(timeLeft);
-
             countdownRef.current = setInterval(() => {
                 timeLeft -= 1;
                 setCountdown(timeLeft);
                 if (timeLeft <= 0) {
                     clearTimers();
-                    alert("Logged out due to inactivity."); // Use alert or AlertDialog
-                    handleLogout(); // Trigger logout
+                    alert("Logged out due to inactivity.");
+                    handleLogout(); // handleLogout is safe here
                 }
             }, 1000);
-        }, 14 * 60 * 1000); // 14 minutes timeout
-    }, [clearTimers]); // Include dependencies if handleLogout were used directly
+        }, 14 * 60 * 1000);
+    }, [clearTimers, handleLogout]); // Added handleLogout dependency
 
-
+    // --- UPDATED: handleUserActivity to check for user ---
     const handleUserActivity = useCallback(() => {
-        if (!isAuthenticated) return; // Only run if logged in
-        clearTimers(); // Clear both main timer and countdown (if active)
-        setWarning(false); // Hide the warning
-        startInactivityWarning(); // Restart the main timer
-    }, [isAuthenticated, clearTimers, startInactivityWarning]); // Add dependencies
+        if (!user) return; // Only run if logged in
+        clearTimers();
+        setWarning(false);
+        startInactivityWarning();
+    }, [user, clearTimers, startInactivityWarning]); // Added user dependency
 
-    // Effect 1: Check session on initial load
     useEffect(() => {
         checkSession();
-    }, [checkSession]); // Run checkSession once on mount
+    }, [checkSession]);
 
-    // Effect 2: Manage activity listeners
+    // --- UPDATED: useEffect to depend on user object ---
     useEffect(() => {
-        if (isAuthenticated) {
+        if (user) {
             const resetEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
             resetEvents.forEach(evt => window.addEventListener(evt, handleUserActivity, { capture: true, passive: true }));
-            handleUserActivity(); // Start timer immediately after auth confirmed
+            handleUserActivity(); // Start timer immediately
 
             return () => {
                 resetEvents.forEach(evt => window.removeEventListener(evt, handleUserActivity, { capture: true }));
-                clearTimers(); // Clear timers on logout/unmount
+                clearTimers();
             };
         } else {
-            clearTimers(); // Ensure timers cleared if not authenticated
+            clearTimers();
         }
-    }, [isAuthenticated, handleUserActivity, clearTimers]); // Rerun if auth status changes
+    }, [user, handleUserActivity, clearTimers]);
 
     const { setSearchKey } = useSearchKey();
 
-    // Clear search key when navigating away from relevant pages
     useEffect(() => {
-        // Add other pages that use searchKey here if necessary
         if (!['customers', 'sales', 'products'].includes(currentPage)) {
             setSearchKey('');
         }
     }, [currentPage, setSearchKey]);
 
-    // Define Pages
+    // --- UPDATED: pages object with Guards and new Subscription page ---
     const pages = {
         dashboard: <DashboardPage setCurrentPage={setCurrentPage} />,
-        products: <ProductsPage />, // Removed setCurrentPage if not needed by component itself
+        products: <ProductsPage />,
         sales: <SalesPage />,
         customers: <CustomersPage />,
         payments: <PaymentsPage />,
-        billing: <BillingPage />, // Removed setCurrentPage, context handles navigation
-        reports: <ReportsPage />,
-        profile: <UserProfilePage />,
-        analytics: <AnalyticsPage />,
+        billing: <BillingPage />,
+        reports: <PremiumGuard><ReportsPage /></PremiumGuard>, // Guarded
+        profile: <UserProfilePage setSelectedPage={setCurrentPage} />, // Passed prop
+        analytics: <PremiumGuard><AnalyticsPage /></PremiumGuard>, // Guarded
         terms: <TermsPage />,
         privacy: <PrivacyPage />,
         help: <HelpPage />,
         notifications: <Notification />,
-        settings: <SettingsPage />, // <-- ADDED
-        chat: <ChatPage />,       // <-- ADDED
+        settings: <SettingsPage />,
+        chat: <ChatPage />,
+        subscribe: <SubscriptionPage setSelectedPage={setCurrentPage} />, // NEW PAGE
     };
 
     if (isLoading) {
-        // Optional: Add a more sophisticated loading screen later
         return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
     }
 
     return (
+        <AlertProvider>
+            <AlertDialog />
+            <Router>
+                {/* --- NEW: Global Premium Modal --- */}
+                <PremiumModal setSelectedPage={setCurrentPage} />
+
+                <Routes>
+                    <Route
+                        path="/login"
+                        element={
+                            !user // Use user object for auth check
+                                ? <LoginPage onLogin={handleLogin} />
+                                : <Navigate to="/" replace />
+                        }
+                    />
+                    <Route
+                        path="/*"
+                        element={
+                            user // Use user object for auth check
+                                ? <MainLayout
+                                    onLogout={handleLogout}
+                                    theme={theme}
+                                    toggleTheme={toggleTheme}
+                                    currentPage={currentPage}
+                                    setCurrentPage={setCurrentPage}
+                                    pages={pages}
+                                    username={user?.username} // Pass username from user object
+                                />
+                                : <Navigate to="/login" replace />
+                        }
+                    />
+                </Routes>
+            </Router>
+            <Toaster position="top-center" toastOptions={{ duration: 2500 }} />
+        </AlertProvider>
+    );
+}
+
+// --- NEW: App component now just wraps providers ---
+function App() {
+    return (
         <QueryClientProvider client={queryClient}>
-            {/* --- WRAPPED WITH AlertProvider --- */}
             <AlertProvider>
-                <AlertDialog /> {/* --- ADDED AlertDialog --- */}
-                <Router>
-                    <Routes>
-                        <Route
-                            path="/login"
-                            element={
-                                !isAuthenticated
-                                    ? <LoginPage onLogin={handleLogin} />
-                                    : <Navigate to="/" replace />
-                            }
-                        />
-                        <Route
-                            path="/*" // Handles all other paths including root "/"
-                            element={
-                                isAuthenticated
-                                    ? <MainLayout
-                                        onLogout={handleLogout}
-                                        theme={theme}
-                                        toggleTheme={toggleTheme}
-                                        currentPage={currentPage}
-                                        setCurrentPage={setCurrentPage}
-                                        pages={pages}
-                                        // Pass user data if MainLayout needs it (e.g., username for chat)
-                                        username={userData?.username}
-                                    />
-                                    : <Navigate to="/login" replace />
-                            }
-                        />
-                    </Routes>
-                </Router>
-                <Toaster position="top-center" toastOptions={{ duration: 2500 }} /> {/* --- ADDED Toaster --- */}
+                <PremiumProvider>
+                    <PremiumModalProvider>
+                        <AppContent />
+                    </PremiumModalProvider>
+                </PremiumProvider>
             </AlertProvider>
         </QueryClientProvider>
     );

@@ -398,10 +398,10 @@ const DashboardPage = ({ setCurrentPage }) => {
                         className="fa-duotone fa-solid fa-bell" style={{paddingRight: '7px'}}></i>Alerts
                     </button>
                     <button className="btn" onClick={() => goTo('customers')}><i
-                        className="fa-duotone fa-regular fa-users" style={{paddingRight: '7px'}}></i>Alerts
+                        className="fa-duotone fa-regular fa-users" style={{paddingRight: '7px'}}></i>Customers
                     </button>
                     <button className="btn" onClick={() => goTo('analytics')}><i
-                        className="fa-duotone fa-solid fa-chart-mixed" style={{paddingRight: '7px'}}></i>Alerts
+                        className="fa-duotone fa-solid fa-chart-mixed" style={{paddingRight: '7px'}}></i>Analytics
                     </button>
 
                 </div>

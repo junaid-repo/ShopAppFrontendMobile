@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-// import Footer from "./Footer"; // Removed Footer import
+// --- ADDED ---
+import { FaFileInvoice } from 'react-icons/fa'; // Import the billing icon
 
 const MainLayout = ({ children, onLogout, toggleTheme, theme, currentPage, setCurrentPage, pages }) => {
     const navigate = useNavigate();
@@ -86,9 +87,40 @@ const MainLayout = ({ children, onLogout, toggleTheme, theme, currentPage, setCu
                 {/* --- Footer component removed --- */}
 
             </div>
+
+            {/* --- ADDED: Floating Action Button for Billing --- */}
+            <button
+                onClick={() => setCurrentPage('billing')}
+                title="Go to Billing"
+                style={{
+                    position: 'fixed',
+                    bottom: '25px',
+                    right: '25px',
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--primary-color)', // Your app's primary color
+                    color: 'white',
+                    border: 'none',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '22px', // Icon size
+                    cursor: 'pointer',
+                    zIndex: 99, // Below modals, above content
+                    transition: 'transform 0.2s ease',
+                }}
+                // Simple hover effect
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >
+                <i className="fa-duotone fa-solid fa-plus" style={{fontSize: '20px'}}></i>
+            </button>
+            {/* --- END: Floating Action Button --- */}
+
         </div>
     );
 };
 
 export default MainLayout;
-

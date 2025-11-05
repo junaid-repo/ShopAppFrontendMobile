@@ -8,7 +8,8 @@ import './BillingPage.css'; // Add specific mobile styles if needed
 import { useConfig } from "./ConfigProvider";
 import { getIndianStates } from "../utils/statesUtil"; // Added
 import toast, { Toaster } from 'react-hot-toast'; // Added
-
+import { usePremium } from '../context/PremiumContext';
+import { FaCrown } from 'react-icons/fa';
 // Debounce Hook (from desktop)
 const useDebounce = (value, delay) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -96,6 +97,14 @@ const BillingPage = () => {
     const discountPercentage = actualSubtotal > 0 ? (((actualSubtotal - sellingSubtotal) / actualSubtotal) * 100).toFixed(2) : 0;
     const remainingAmount = sellingSubtotal - payingAmount;
     const totalUnits = cart.reduce((total, item) => total + item.quantity, 0);
+
+    const { isPremium } = usePremium();
+    const [dailyInvoiceCount, setDailyInvoiceCount] = useState(0);
+    const [isLimitLoading, setIsLimitLoading] = useState(true);
+
+    const DAILY_LIMIT = 20;
+    const remainingInvoices = Math.max(0, DAILY_LIMIT - dailyInvoiceCount);
+    const isLimitReached = !isPremium && remainingInvoices <= 0;
 
     // Grouped Taxes (from Desktop)
     const groupedTaxes = useMemo(() => {
@@ -189,6 +198,45 @@ const BillingPage = () => {
         };
         runSanityCheck();
     }, [apiUrl]);
+
+    useEffect(() => {
+        // If user is premium or apiUrl isn't ready, don't fetch.
+        if (isPremium || !apiUrl) {
+            setIsLimitLoading(false);
+            return;
+        }
+
+        const fetchDailyCount = async () => {
+            setIsLimitLoading(true);
+            try {
+                // This is the API endpoint you will create
+                const response = await fetch(`${apiUrl}/api/shop/billing/daily-count`, {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setDailyInvoiceCount(data.count || 0);
+                } else {
+                    console.error("Could not fetch daily invoice count.");
+                    setDailyInvoiceCount(0); // Fail open
+                }
+            } catch (error) {
+                console.error("Error fetching daily count:", error);
+            } finally {
+                setIsLimitLoading(false);
+            }
+        };
+
+        fetchDailyCount();
+    }, [apiUrl, isPremium]);
+    // --- END OF ADDED CODE ---
+
+    // Sync payingAmount with sellingSubtotal
+    useEffect(() => {
+        // ... (existing code)
+    }, [sellingSubtotal, isPayingAmountManuallySet, setPayingAmount]);
 
     // --- Product Search API Call (from Desktop) ---
     const fetchProductsFromAPI = useCallback((q = '') => {
@@ -529,9 +577,14 @@ const BillingPage = () => {
                         {/* --- REQUEST 4: Customer Actions (Updated) --- */}
                         <div className="current-bill-header">
                             <h3>Current Bill</h3>
+                            {!isPremium && !isLimitLoading && (
+                                <span className="premium-limit-badge-mobile">
+                                    {remainingInvoices} remaining
+                                </span>
+                            )}
                             <div className="current-bill-actions">
                                 <div className="customer-action-buttons-left">
-                                    <button className="btn" onClick={() => setIsModalOpen(true)}>
+                                    <button className="btn" disabled={isLimitReached} onClick={() => setIsModalOpen(true)}>
                                         {selectedCustomer ? `Change` : 'Select Customer'}
                                     </button>
                                     <button className="btn" onClick={() => setIsNewCusModalOpen(true)}>
@@ -564,36 +617,66 @@ const BillingPage = () => {
                         </div>
 
                         {/* Product Search */}
-                        <div className="product-search-container" ref={searchContainerRef} style={{ marginTop: '1rem', position: 'relative' }}>
-                            <div className="search-input-wrapper">
-                                <FaSearch />
-                                <input
-                                    type="text"
-                                    ref={productSearchInputRef}
-                                    placeholder="Search products to add..."
-                                    value={productSearchTerm}
-                                    onChange={(e) => setProductSearchTerm(e.target.value)}
-                                    onFocus={() => setIsSearchFocused(true)}
-                                    className="search-input"
-                                />
-                            </div>
-                            {/* Search Results Dropdown */}
-                            {isSearchFocused && debouncedSearchTerm && (
-                                <div className="search-results-mobile">
-                                    {products.length > 0 ? products.map((p) => (
-                                        <div
-                                            key={p.id}
-                                            className="search-result-item-mobile"
-                                            onClick={() => handleAddProduct(p)}
-                                        >
-                                            <strong>{p.name}</strong>
-                                            <small>₹{p.price} | Stock: {p.stock}</small>
-                                        </div>
-                                    )) : <div className="search-no-results">No products found.</div>}
+                        {/* Product Search */}
+                        <div
+                            style={{ position: 'relative', marginTop: '1rem' }}
+                            /* Add tooltip class and data-tooltip only when limit is reached */
+                            className={isLimitReached ? "tooltip-wrapper" : ""}
+                            data-tooltip={isLimitReached ? "Today's invoice limit reached. Upgrade to Premium." : ""}
+                        >
+                            {/* 1. Add the crown icon if limit is reached */}
+                            {isLimitReached && (
+                                <div className="premium-feature-icon" style={{ zIndex: 5, top: '5px', right: '10px', fontSize: '1.2rem' }}>
+                                    <FaCrown />
                                 </div>
                             )}
-                        </div>
 
+                            {/* 2. Your existing search bar div, now with opacity and pointerEvents */}
+                            <div
+                                className="product-search-container"
+                                ref={searchContainerRef}
+                                style={{
+                                    position: 'relative',
+                                    /* Apply styles to the container, not the wrapper */
+                                    opacity: isLimitReached ? 0.6 : 1,
+                                    pointerEvents: isLimitReached ? 'none' : 'auto',
+                                    transition: 'opacity 0.3s ease'
+                                }}
+                            >
+                                <div className="search-input-wrapper">
+                                    <FaSearch />
+                                    <input
+                                        type="text"
+                                        ref={productSearchInputRef}
+                                        /* 3. Update placeholder and disabled state */
+                                        placeholder={isLimitReached ? "Daily limit reached" : "Search products to add..."}
+                                        disabled={isLimitReached}
+                                        value={productSearchTerm}
+                                        onChange={(e) => setProductSearchTerm(e.target.value)}
+                                        onFocus={() => setIsSearchFocused(true)}
+                                        className="search-input"
+                                        /* 4. Add not-allowed cursor when disabled */
+                                        style={{ cursor: isLimitReached ? 'not-allowed' : 'auto' }}
+                                    />
+                                </div>
+
+                                {/* 5. Search results (will be hidden if input is disabled) */}
+                                {isSearchFocused && debouncedSearchTerm && (
+                                    <div className="search-results-mobile">
+                                        {products.length > 0 ? products.map((p) => (
+                                            <div
+                                                key={p.id}
+                                                className="search-result-item-mobile"
+                                                onClick={() => handleAddProduct(p)}
+                                            >
+                                                <strong>{p.name}</strong>
+                                                <small>₹{p.price} | Stock: {p.stock}</small>
+                                            </div>
+                                        )) : <div className="search-no-results">No products found.</div>}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                         {/* Cart Items */}
                         <div className="cart-items" style={{ marginTop: '1rem' }}>
                             {cart.length === 0 ? (

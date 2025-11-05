@@ -508,6 +508,13 @@ body.dark-theme .payment-label-vertical.disabled {
     border-color: var(--border-color, #ddd);
     color: var(--text-color, #333);
 }
-
+.premium-limit-badge-mobile {
+    background: rgba(0, 170, 255, 0.1);
+    color: #00aaff;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
 /* --- End of REQUEST 1 --- */
 

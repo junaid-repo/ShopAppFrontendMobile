@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useConfig } from "./ConfigProvider";
 import { MdDownload } from "react-icons/md";
 import './SalesPage.css';
+import PremiumFeature from '../components/PremiumFeature';
 import {
     MdPerson,
     MdEmail,
@@ -362,6 +363,7 @@ const SalesPage = () => {
                                 >
                                     <i className="fa-duotone fa-solid fa-download" style={{fontSize:"15px", color:"var(--text-color)"}}></i>
                                 </button>
+                                <PremiumFeature>
                                 <button
                                     className="download-btn"
                                     title="Send via Email"
@@ -371,11 +373,11 @@ const SalesPage = () => {
                                     }}
                                 >
                                     <i className="fa-duotone fa-solid fa-paper-plane" style={{fontSize:"15px", color:"var(--text-color)"}}></i>
-                                </button>
+                                </button></PremiumFeature>
 
                                 {sale.status !== 'Paid' && (
                                     <>
-
+                                    <PremiumFeature>
                                         <button
                                             className="download-btn"
                                             title="Send Reminder"
@@ -385,7 +387,7 @@ const SalesPage = () => {
                                             }}
                                         >
                                             <i className="fa-duotone fa-solid fa-bell-plus" style={{fontSize: "15px", color:"var(--text-color)"}}></i>
-                                        </button>
+                                        </button></PremiumFeature>
                                     </>
                                 )}
                             </td>

@@ -6,6 +6,7 @@ import { MdEdit, MdDelete } from "react-icons/md";
 // --- NEW IMPORTS ---
 import toast, { Toaster } from 'react-hot-toast';
 import { FaCheckDouble, FaTimes } from 'react-icons/fa';
+import PremiumFeature from '../components/PremiumFeature';
 
 /**
  * Custom hook to debounce a value.
@@ -490,7 +491,7 @@ const ProductsPage = () => {
             <div className="actions-toolbar">
                 <div className="actions-group-left">
                     <button type="button" className="btn" onClick={() => setIsModalOpen(true)}><i class="fa-duotone fa-solid fa-grid-2-plus" style={{marginRight: "3px"}}></i>Add Product</button>
-                    <button type="button" className="btn" onClick={() => setIsCsvModalOpen(true)}><i class="fa-duotone fa-solid fa-arrow-up-from-square" style={{marginRight: "5px"}}></i>Upload CSV</button>
+                  <PremiumFeature>  <button type="button" className="btn" onClick={() => setIsCsvModalOpen(true)}><i class="fa-duotone fa-solid fa-arrow-up-from-square" style={{marginRight: "5px"}}></i>Upload CSV</button></PremiumFeature>
                     <button type="button" className="btn" onClick={handleExportCSV}><i class="fa-duotone fa-solid fa-file-export" style={{marginRight: "0px"}}></i>Export CSV</button>
 
 

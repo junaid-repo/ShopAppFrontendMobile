@@ -1,6 +1,6 @@
-// src/components/Sidebar.js
 import React from 'react';
 import './Sidebar.css'; // Ensure CSS is imported
+import PremiumFeature from '../components/PremiumFeature';
 
 const Sidebar = ({ visible = false, onClose = () => {}, setCurrentPage, currentPage }) => {
 
@@ -39,17 +39,37 @@ const Sidebar = ({ visible = false, onClose = () => {}, setCurrentPage, currentP
             >
                 {/* Main Navigation - Make this scrollable */}
                 <nav className="sidebar-nav">
-                    {menuItems.map(item => (
-                        <button
-                            key={item.key}
-                            className={`sidebar-link ${currentPage === item.key ? 'active' : ''}`}
-                            onClick={() => handleNavigation(item.key)}
-                            title={item.label}
-                        >
-                            <i className={item.iconClass} aria-hidden="true"></i>
-                            <span className="nav-text">{item.label}</span>
-                        </button>
-                    ))}
+                    {menuItems.map(item => {
+                        // --- UPDATED LOGIC ---
+                        // Check if the item is a premium feature
+                        const isPremium = item.key === 'reports' || item.key === 'analytics';
+
+                        // Create the button element first
+                        const button = (
+                            <button
+                                // key is now on the outer element if premium
+                                key={isPremium ? undefined : item.key}
+                                className={`sidebar-link ${currentPage === item.key ? 'active' : ''}`}
+                                onClick={() => handleNavigation(item.key)}
+                                title={item.label}
+                            >
+                                <i className={item.iconClass} aria-hidden="true"></i>
+                                <span className="nav-text">{item.label}</span>
+                            </button>
+                        );
+
+                        // If it's premium, wrap the button. Otherwise, return the button directly.
+                        if (isPremium) {
+                            return (
+                                <PremiumFeature key={item.key}>
+                                    {button}
+                                </PremiumFeature>
+                            );
+                        } else {
+                            return button; // Return the button as-is
+                        }
+                        // --- END UPDATED LOGIC ---
+                    })}
                 </nav>
 
                 {/* Footer Section - Positioned at the bottom */}
@@ -69,3 +89,4 @@ const Sidebar = ({ visible = false, onClose = () => {}, setCurrentPage, currentP
 };
 
 export default Sidebar;
+
